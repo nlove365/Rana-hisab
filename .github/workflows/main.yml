@@ -4,13 +4,11 @@ name: Build Rana Hisab APK
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,36 +22,36 @@ jobs:
       - name: Locate Android SDK
         run: |
           echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
-          echo "/usr/local/lib/android/sdk/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
           echo "/usr/local/lib/android/sdk/platform-tools" >> "$GITHUB_PATH"
 
       - name: Install Android SDK packages
         run: |
           SDKMANAGER=$(find /usr/local/lib/android/sdk -name sdkmanager -type f | head -n 1)
-          if [ -z "$SDKMANAGER" ]; then
-            echo "ERROR: sdkmanager not found"
-            exit 1
-          fi
-          yes | "$SDKMANAGER" --licenses || true
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-        
+
       - name: Extract Android project
         run: |
           mkdir -p extracted
           unzip -q Rana-Hisab-Updated-Project-2026-11-19.zip -d extracted
-          echo "===== PROJECT FILES ====="
-          find extracted -maxdepth 5 -type f | sort | head -200
-          echo "===== GRADLE FILES ====="
-          find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "build.gradle" -o -name "build.gradle.kts" -o -name "gradlew" \)
+          echo "PROJECT_DIR=$GITHUB_WORKSPACE/extracted/Rana-Hisab-Android" >> "$GITHUB_ENV"
+          test -f extracted/Rana-Hisab-Android/settings.gradle
+          test -f extracted/Rana-Hisab-Android/app/build.gradle
+
+      - name: Install Gradle 8.7
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.7-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt
+          echo "/opt/gradle-8.7/bin" >> "$GITHUB_PATH"
 
       - name: Build debug APK
         run: |
           cd "$PROJECT_DIR"
-          ./gradlew --no-daemon assembleDebug
+          gradle --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Rana-Hisab-APK
-          path: extracted/**/build/outputs/apk/debug/*.apk
+          path: extracted/Rana-Hisab-Android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
