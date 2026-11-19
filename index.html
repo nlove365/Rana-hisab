@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#183b70">
+<meta name="description" content="বাংলা ভাষায় সহজ আয়-ব্যয় ও পণ্য হিসাব রাখুন।">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>রানা হিসাব</title>
+<style>
+*{box-sizing:border-box}body{margin:0;overflow-x:hidden;font-family:system-ui,-apple-system,"Noto Sans Bengali",sans-serif;background:#f4f7fb;color:#172033}
+header{background:linear-gradient(135deg,#183b70,#2876d8);color:white;padding:22px 18px}
+h1{margin:0;font-size:28px}.sub{opacity:.85;margin-top:5px}
+.wrap{max-width:1100px;margin:auto;padding:16px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.card{background:white;border-radius:18px;padding:18px;box-shadow:0 5px 20px #193b7012}.small{font-size:13px;color:#68758a}.ok{color:#087443}.actions{display:flex;flex-wrap:wrap;gap:8px}.num{font-size:25px;font-weight:800;margin-top:6px}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}button{border:0;border-radius:12px;padding:11px 15px;background:#e9eef7;color:#17345d;font-weight:700;cursor:pointer}
+button.primary{background:#246bce;color:white}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}input,select{width:100%;padding:13px;border:1px solid #d7deea;border-radius:12px;font-size:16px}label{display:block;margin:8px 0 5px;font-weight:700}
+textarea{width:100%;padding:13px;border:1px solid #d7deea;border-radius:12px;min-height:90px;font-size:16px}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;border-bottom:1px solid #edf0f5;text-align:left}th{background:#f7f9fc}
+.hidden{display:none}.danger{background:#ffe9e9;color:#b42318}.voice{display:flex;gap:8px}.hint{font-size:13px;color:#68758a;margin-top:7px}
+@media(max-width:750px){.grid{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr}table{font-size:13px}.wrap{padding:10px}nav button{flex:1 1 auto;min-width:105px}}
+@media(max-width:420px){.grid{grid-template-columns:1fr}.card{padding:14px}nav{display:grid;grid-template-columns:1fr 1fr}nav button{min-width:0;width:100%}.actions button{flex:1 1 45%}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>রানা হিসাব</h1><div class="sub">সহজ বাংলা হিসাব • লিখে বা মুখে কমান্ড দিন</div></div></header>
+<div class="wrap">
+<nav>
+<button onclick="show('dash')">ড্যাশবোর্ড</button><button onclick="show('add')">দ্রুত হিসাব</button><button onclick="show('products')">পণ্য</button><button onclick="show('list')">লেনদেন</button><button onclick="show('cmd')">🎙️ স্মার্ট কমান্ড</button><button onclick="show('photo')">📷 ছবি</button><button onclick="show('pos')">🛒 POS</button><button onclick="show('reports')">📊 রিপোর্ট</button><button onclick="show('payments')">💳 পেমেন্ট</button><button onclick="backup()">ব্যাকআপ</button><button onclick="restore.click()">রিস্টোর</button>
+</nav>
+<div class="card" style="margin-bottom:14px;background:#eef6ff">
+<b>শুরু করুন:</b> “নতুন হিসাব” থেকে আয়/খরচ যোগ করুন। “স্মার্ট কমান্ড”-এ লিখে কমান্ড চালানো যাবে।
+<br><span class="hint">🎙️ ভয়েসের জন্য Chrome/Edge-এ মাইক্রোফোন অনুমতি লাগতে পারে। কিছু ফোনে সরাসরি HTML ফাইল থেকে ভয়েস কাজ করে না—সেক্ষেত্রে লিখে কমান্ড ব্যবহার করুন।</span>
+</div>
+<section id="dash">
+<div class="grid">
+<div class="card">মোট আয়<div class="num" id="income">৳0</div></div>
+<div class="card">মোট খরচ<div class="num" id="expense">৳0</div></div>
+<div class="card">ব্যালেন্স<div class="num" id="balance">৳0</div></div>
+<div class="card">লেনদেন<div class="num" id="count">0</div></div>
+</div>
+<div class="card" style="margin-top:14px"><h3>সাম্প্রতিক লেনদেন</h3><div id="recent"></div></div>
+</section>
+
+<section id="add" class="hidden">
+<div class="card"><h2>⚡ দ্রুত হিসাব</h2>
+<div class="row">
+<div><label>ধরন</label><select id="type"><option value="income">আয় / বিক্রয় / জমা</option><option value="expense">খরচ / ক্রয়</option></select></div>
+<div><label>টাকার পরিমাণ</label><input id="amount" type="number" inputmode="decimal" placeholder="যেমন 5000"></div>
+</div>
+<div class="row">
+<div><label>পণ্য</label><select id="product"><option value="">পণ্য নির্বাচন করুন</option></select></div>
+<div><label>নতুন পণ্যের নাম (চাইলে)</label><input id="newproduct" placeholder="যেমন চাল"></div>
+</div>
+<div class="row">
+<div><label>পরিমাণ</label><input id="qty" type="number" inputmode="decimal" step="any" placeholder="যেমন 2.5"></div>
+<div><label>একক</label><select id="unit"></select></div>
+</div>
+<div class="row">
+<div><label>ব্যক্তি/কাস্টমার/সাপ্লায়ার</label><input id="party" placeholder="যেমন করিম"></div>
+<div><label>বিবরণ</label><input id="note" placeholder="যেমন ২ কেজি চাল বিক্রি"></div>
+</div>
+<div class="actions">
+<button class="primary" onclick="addTx()">💾 হিসাব সংরক্ষণ</button>
+<button onclick="clearForm()">🧹 ফর্ম পরিষ্কার</button>
+</div>
+<p class="small">একবার সংরক্ষণ করার পর একই স্ক্রিনে থাকবেন—বারবার “নতুন লেনদেন” খুলতে হবে না।</p>
+</div>
+</section>
+
+<section id="products" class="hidden">
+<div class="card"><h2>📦 পণ্যের তালিকা</h2>
+<div class="row">
+<div><label>পণ্যের নাম</label><input id="pname" placeholder="যেমন চাল"></div>
+<div><label>ডিফল্ট একক</label><select id="punit"></select></div>
+</div>
+<p><button class="primary" onclick="addProduct()">➕ পণ্য যোগ করুন</button></p>
+<div id="productTable"></div>
+</div></section>
+
+<section id="list" class="hidden"><div class="card"><h2>সব লেনদেন</h2><input id="search" oninput="render()" placeholder="নাম বা বিবরণ দিয়ে খুঁজুন"><div id="table"></div></div></section>
+
+<section id="photo" class="hidden">
+<div class="card"><h2>📷 ছবি থেকে তথ্য সংগ্রহ</h2>
+<p class="small">রসিদ, বিল বা লিখিত হিসাবের ছবি দিন। লেখা পড়া গেলে সফটওয়্যার সম্ভাব্য তথ্য আলাদা ঘরে বসাবে—সংরক্ষণের আগে আপনি যাচাই/সংশোধন করতে পারবেন।</p>
+<input id="photoFile" type="file" accept="image/*" onchange="readPhoto(event)">
+<div id="ocrStatus" class="small"></div>
+<div id="ocrPreview"></div>
+</div></section>
+
+<section id="cmd" class="hidden"><div class="card"><h2>স্মার্ট কমান্ড</h2>
+<div class="voice"><textarea id="command" placeholder="যেমন: আজ করিমের কাছ থেকে ৫০০০ টাকা পেলাম&#10;অথবা: আজ দোকানের খরচ ১২০০ টাকা"></textarea><button class="primary" onclick="speak()">🎙️</button></div>
+<p><button class="primary" onclick="runCommand()">কমান্ড চালান</button></p><div class="hint">মাইক্রোফোন কাজ করতে Chrome/Edge-এ সাইটটি খুলুন এবং মাইক্রোফোন অনুমতি দিন।</div><div id="result"></div>
+</div></section>
+
+<section id="pos" class="hidden"><div class="card"><h2>🛒 POS কুইক কার্ট</h2>
+<div class="row"><div><label>পণ্য</label><select id="posProduct"></select></div><div><label>পরিমাণ</label><input id="posQty" type="number" step="any" value="1"></div></div>
+<div class="row"><div><label>একক মূল্য (৳)</label><input id="posPrice" type="number" step="any" placeholder="প্রতি এককের দাম"></div><div><label>ডিসকাউন্ট (৳)</label><input id="posDiscount" type="number" step="any" value="0"></div></div>
+<p><button class="primary" onclick="cartAdd()">কার্টে যোগ করুন</button></p><div id="cartView"></div><div class="row"><div><label>কাস্টমারের নাম</label><input id="posParty"></div><div><label>প্রাপ্ত টাকা (৳)</label><input id="posPaid" type="number" value="0"></div></div>
+<p><button class="primary" onclick="checkout()">বিক্রি সম্পন্ন / রসিদ</button></p><div id="receipt"></div></div></section>
+<section id="reports" class="hidden"><div class="card"><h2>📊 তারিখভিত্তিক রিপোর্ট</h2><div class="row"><div><label>শুরুর তারিখ</label><input id="reportFrom" type="date"></div><div><label>শেষ তারিখ</label><input id="reportTo" type="date"></div></div><p><button class="primary" onclick="makeReport()">রিপোর্ট দেখুন</button></p><div id="reportResult"></div></div></section>
+<section id="payments" class="hidden"><div class="card"><h2>💳 বাকি আদায় / পরিশোধ</h2><div class="row"><div><label>ব্যক্তি</label><input id="payParty" placeholder="কাস্টমার/সাপ্লায়ার"></div><div><label>টাকার পরিমাণ</label><input id="payAmount" type="number"></div></div><div class="row"><div><label>ধরন</label><select id="payType"><option value="receive">কাস্টমারের কাছ থেকে আদায়</option><option value="pay">সাপ্লায়ারকে পরিশোধ</option></select></div><div><label>বিবরণ</label><input id="payNote"></div></div><p><button class="primary" onclick="recordPayment()">পেমেন্ট সংরক্ষণ</button></p><div id="paymentHistory"></div></div></section>
+<input id="restore" type="file" accept=".json" hidden onchange="restoreData(event)">
+</div>
+<script>
+let tx=JSON.parse(localStorage.getItem('hisabPro')||'[]');
+let products=JSON.parse(localStorage.getItem('hisabProducts')||'[]');
+const units=['টি','কেজি','গ্রাম','লিটার','মিলিলিটার','প্যাকেট','বস্তা','কার্টন','ডজন','মিটার','ফুট','জোড়া','বোতল','বক্স','অন্যান্য'];
+const money=n=>'৳'+Number(n||0).toLocaleString('bn-BD');
+function save(){localStorage.setItem('hisabPro',JSON.stringify(tx));localStorage.setItem('hisabProducts',JSON.stringify(products));render();}
+function show(id){['dash','add','list','cmd','products','photo'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id));render()}
+function fillSelects(){
+  unit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
+  punit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
+  product.innerHTML='<option value="">পণ্য নির্বাচন করুন</option>'+products.map((p,i)=>`<option value="${i}">${esc(p.name)} (${esc(p.unit)})</option>`).join('');
+}
+function clearForm(){
+  amount.value=''; party.value=''; note.value=''; qty.value=''; newproduct.value=''; product.value='';
+}
+function addProduct(){
+  const n=pname.value.trim(), u=punit.value||'টি';
+  if(!n)return alert('পণ্যের নাম দিন');
+  if(products.some(p=>p.name.toLowerCase()===n.toLowerCase()))return alert('এই পণ্য আগে থেকেই আছে');
+  products.push({name:n,unit:u}); save(); pname.value=''; renderProducts(); fillSelects();
+}
+function renderProducts(){
+  productTable.innerHTML=products.length?'<table><tr><th>পণ্য</th><th>একক</th><th></th></tr>'+
+  products.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.unit)}</td><td><button class="danger" onclick="deleteProduct(${i})">মুছুন</button></td></tr>`).join('')+'</table>':'এখনও কোনো পণ্য যোগ করা হয়নি।';
+}
+function deleteProduct(i){if(confirm('পণ্যটি তালিকা থেকে মুছবেন?')){products.splice(i,1);save();renderProducts();fillSelects();}}
+function addTx(t=null,a=null,p='',n='',prod='',q='',u=''){
+  let type=t||document.getElementById('type').value, amount=Number(a??document.getElementById('amount').value);
+  if(!amount)return alert('টাকার পরিমাণ দিন');
+  let prodName=prod||document.getElementById('newproduct').value.trim();
+  if(!prodName && product.value!==''){
+    let pp=products[Number(product.value)]; if(pp){prodName=pp.name;if(!u)u=pp.unit;}
+  }
+  if(!u)u=document.getElementById('unit').value;
+  let qtyVal=q||document.getElementById('qty').value;
+  if(prodName && !products.some(x=>x.name.toLowerCase()===prodName.toLowerCase()))products.push({name:prodName,unit:u||'টি'});
+  tx.unshift({id:Date.now(),date:new Date().toISOString(),type,amount,party:p||document.getElementById('party').value,product:prodName,qty:qtyVal,unit:u,note:n||document.getElementById('note').value});
+  save(); clearForm();
+  // Keep the user on the same fast-entry screen.
+  show('add');
+}
+function parseBanglaNumber(s){
+  return Number(String(s||'').replace(/[০-৯]/g,d=>'০১২৩৪৫৬৭৮৯'.indexOf(d)).replace(/[^\d.]/g,''));
+}
+function extractCommand(s){
+  const nums=s.match(/[০-৯0-9][০-৯0-9,.]*/g)||[];
+  const amount=nums.length?parseBanglaNumber(nums[nums.length-1]):0;
+  const qty=nums.length>1?parseBanglaNumber(nums[0]):'';
+  const expense=/খরচ|ব্যয়|ব্যয়|দিলাম|দিয়েছি|কিনলাম|কেনা|ক্রয়/.test(s);
+  const income=/পেলাম|পেয়েছি|আয়|বিক্রি|জমা|বিক্রয়/.test(s);
+  const type=expense?'expense':income?'income':'income';
+  const unitMatch=units.find(x=>s.includes(x));
+  let partyMatch=s.match(/(?:থেকে|কাছ থেকে|কে|কে দিলাম|কে পেলাম)\s*([^\s,০-৯0-9]+)/);
+  let party=partyMatch?partyMatch[1]:'';
+  let cleaned=s.replace(/[০-৯0-9][০-৯0-9,.]*/g,'').replace(/টাকা/g,'').replace(/থেকে/g,'').trim();
+  return {type,amount,qty,unit:unitMatch||'টি',party,note:cleaned};
+}
+function runCommand(auto=false){
+  let s=command.value.trim();
+  if(!s){if(!auto)alert('কমান্ড লিখুন বা মাইক্রোফোন চাপুন');return;}
+  const d=extractCommand(s);
+  if(!d.amount){result.innerHTML='<p>⚠️ টাকার পরিমাণ বুঝতে পারিনি। উদাহরণ: “করিমের কাছ থেকে ৫০০০ টাকা পেলাম”</p>';return;}
+  addTx(d.type,d.amount,d.party,d.note,'',d.qty,d.unit);
+  result.innerHTML='<p class="ok">✅ কমান্ড বুঝে হিসাব সংরক্ষণ হয়েছে।</p>';
+  command.value='';
+}
+function speak(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('এই ফোন/ব্রাউজারে বাংলা Web Speech API নেই। Chrome আপডেট করে আবার চেষ্টা করুন, অথবা লিখে কমান্ড ব্যবহার করুন।');return;}
+  const r=new SR();
+  r.lang='bn-BD'; r.continuous=false; r.interimResults=false; r.maxAlternatives=1;
+  result.innerHTML='<p>🎙️ শুনছি... এখন হিসাবটি বলুন।</p>';
+  try{r.start();}catch(e){alert('মাইক্রোফোন চালু করা যায়নি। ব্রাউজারের Microphone Permission চালু করুন।');return;}
+  r.onresult=e=>{command.value=e.results[0][0].transcript;runCommand(true);}
+  r.onerror=e=>{result.innerHTML='<p>⚠️ ভয়েস ইনপুট পাওয়া যায়নি। Chrome-এ Microphone Permission দিন। '+(e.error||'')+'</p>';}
+}
+function render(){
+ fillSelects(); renderProducts();
+ let inc=tx.filter(x=>x.type==='income').reduce((s,x)=>s+x.amount,0), exp=tx.filter(x=>x.type==='expense').reduce((s,x)=>s+x.amount,0);
+ income.textContent=money(inc);expense.textContent=money(exp);balance.textContent=money(inc-exp);count.textContent=tx.length;
+ let q=(search?.value||'').toLowerCase(), arr=tx.filter(x=>(x.party+' '+x.note).toLowerCase().includes(q));
+ table.innerHTML=arr.length?'<table><tr><th>তারিখ</th><th>খাত</th><th>ধরন</th><th>টাকা</th><th></th></tr>'+arr.map(x=>`<tr><td>${new Date(x.date).toLocaleDateString('bn-BD')}</td><td>${esc(x.party||'—')}<br>${esc(x.product||'')}${x.qty?` — ${esc(x.qty)} ${esc(x.unit||'')}`:''}<br>${esc(x.note||'')}</td><td>${x.type==='income'?'আয়':'খরচ'}</td><td>${money(x.amount)}</td><td><button class="danger" onclick="del(${x.id})">মুছুন</button></td></tr>`).join('')+'</table>':'কোনো লেনদেন নেই';
+ recent.innerHTML=tx.slice(0,7).map(x=>`<p>${x.type==='income'?'🟢':'🔴'} ${esc(x.party||x.note||'লেনদেন')} — <b>${money(x.amount)}</b></p>`).join('')||'এখনও কোনো হিসাব নেই';
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function del(id){if(confirm('এই হিসাব মুছবেন?')){tx=tx.filter(x=>x.id!==id);save()}}
+function parseBangla(s){return Number(s.replace(/[০-৯]/g,d=>'০১২৩৪৫৬৭৮৯'.indexOf(d)).replace(/,/g,''))}
+function runCommand(){
+ let s=command.value.trim(), nums=s.match(/[০-৯0-9,]+/g)||[], a=parseBangla(nums[nums.length-1]||'0');
+ if(!a)return result.innerHTML='<p>টাকার পরিমাণ বুঝতে পারিনি।</p>';
+ let lower=s.toLowerCase(), expense=/খরচ|ব্যয়|দিলাম|দিয়েছি|কিনলাম|কেনা/.test(s), income=/পেলাম|পেয়েছি|আয়|বিক্রি|জমা/.test(s);
+ let type=expense?'expense':income?'income':'income';
+ let cleaned=s.replace(/[০-৯0-9,]+/g,'').replace(/টাকা/g,'').trim();
+ addTx(type,a,'স্মার্ট কমান্ড',cleaned);
+ result.innerHTML='<p>✅ কমান্ডটি হিসাব হিসেবে সংরক্ষণ করা হয়েছে।</p>';
+}
+function speak(){
+ if(!('webkitSpeechRecognition'in window||'SpeechRecognition'in window)){alert('এই ব্রাউজারে ভয়েস ইনপুট নেই। Chrome ব্যবহার করুন।');return}
+ let R=window.SpeechRecognition||window.webkitSpeechRecognition,r=new R();r.lang='bn-BD';r.start();r.onresult=e=>{command.value=e.results[0][0].transcript};r.onerror=()=>alert('মাইক্রোফোন ব্যবহার করা যায়নি। অনুমতি দিন।')
+}
+function backup(){let b=new Blob([JSON.stringify({transactions:tx,products:products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='rana-hisab-backup.json';a.click()}
+function restoreData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result); if(Array.isArray(d)){tx=d}else{tx=d.transactions||[];products=d.products||[]} save();fillSelects();renderProducts();alert('ব্যাকআপ রিস্টোর হয়েছে।')}catch{alert('ফাইলটি সঠিক নয়।')}};r.readAsText(f)}
+render();
+
+async function readPhoto(e){
+ const f=e.target.files[0]; if(!f)return;
+ const status=document.getElementById('ocrStatus'), preview=document.getElementById('ocrPreview');
+ preview.innerHTML='<img style="max-width:100%;max-height:260px;border-radius:12px" src="'+URL.createObjectURL(f)+'">';
+ status.textContent='⏳ ছবির লেখা পড়া হচ্ছে... প্রথমবার একটু সময় লাগতে পারে।';
+ if(!window.Tesseract){
+   const sc=document.createElement('script');
+   sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+   document.head.appendChild(sc);
+   await new Promise((resolve,reject)=>{sc.onload=resolve;sc.onerror=reject}).catch(()=>{throw new Error('OCR library load failed')});
+ }
+ try{
+   const {data:{text}}=await Tesseract.recognize(f,'eng+ben',{logger:m=>{
+     if(m.status==='recognizing text')status.textContent='⏳ ছবি পড়া হচ্ছে: '+Math.round((m.progress||0)*100)+'%';
+   }});
+   status.innerHTML='<span class="ok">✅ লেখা পাওয়া গেছে। নিচে যাচাই করুন।</span>';
+   const box=document.createElement('textarea');box.id='ocrText';box.style.minHeight='180px';box.value=text.trim();
+   preview.appendChild(box);
+   const btn=document.createElement('button');btn.className='primary';btn.textContent='🧩 তথ্য ঘরে বসান';btn.onclick=()=>applyOCR(text);
+   preview.appendChild(document.createElement('br'));preview.appendChild(btn);
+ }catch(err){status.textContent='⚠️ ছবি পড়া যায়নি। পরিষ্কার/সোজা ছবি দিয়ে চেষ্টা করুন।';}
+}
+function applyOCR(text){
+ const d=extractCommand(text.replace(/\n/g,' '));
+ if(d.amount)amount.value=d.amount;
+ if(d.qty)qty.value=d.qty;
+ if(d.unit)unit.value=d.unit;
+ if(d.party)party.value=d.party;
+ note.value=text.trim().slice(0,300);
+ const found=products.find(p=>text.toLowerCase().includes(p.name.toLowerCase()));
+ if(found)product.value=String(products.indexOf(found));
+ show('add');
+ alert('ছবির তথ্য সম্ভাব্য ঘরগুলোতে বসানো হয়েছে। সংরক্ষণের আগে যাচাই করুন।');
+}
+
+// Rana Hisab v2 feature layer: audit-safe entries, stock movement, POS, reports, payments.
+let cart=[];
+function activeTx(){return tx.filter(x=>!x.voided)}
+const oldSave=save;
+save=function(){localStorage.setItem('hisabPro',JSON.stringify(tx));localStorage.setItem('hisabProducts',JSON.stringify(products));localStorage.setItem('ranaPayments',JSON.stringify(payments));render();};
+let payments=JSON.parse(localStorage.getItem('ranaPayments')||'[]');
+const oldShow=show;
+show=function(id){['dash','add','list','cmd','products','photo','pos','reports','payments'].forEach(x=>{let el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render();if(id==='pos')fillPos();if(id==='payments')renderPayments();};
+function unitBase(q,u){q=Number(q||0);if(u==='গ্রাম')return q/1000;if(u==='মিলিলিটার')return q/1000;if(u==='কেজি'||u==='লিটার')return q;return q;}
+function stockFor(name){return activeTx().reduce((n,x)=>{if(x.product!==name)return n;let q=unitBase(x.qty,x.unit);return n+(x.type==='expense'?q:-q)},0)}
+function addTx(t=null,a=null,p='',n='',prod='',q='',u=''){
+ let type=t||document.getElementById('type').value, amount=Number(a??document.getElementById('amount').value);
+ if(!amount||amount<0)return alert('সঠিক টাকার পরিমাণ দিন');
+ let prodName=prod||document.getElementById('newproduct').value.trim();
+ if(!prodName && product.value!==''){let pp=products[Number(product.value)];if(pp){prodName=pp.name;if(!u)u=pp.unit}}
+ if(!u)u=document.getElementById('unit').value;
+ let qtyVal=q||document.getElementById('qty').value;
+ if(prodName&&!products.some(x=>x.name.toLowerCase()===prodName.toLowerCase()))products.push({name:prodName,unit:u||'টি'});
+ tx.unshift({id:Date.now(),date:new Date().toISOString(),type,amount,party:p||document.getElementById('party').value,product:prodName,qty:qtyVal,unit:u,note:n||document.getElementById('note').value,voided:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+ save();clearForm();show('add');
+}
+function del(id){let x=tx.find(t=>t.id===id);if(!x)return;if(confirm('এন্ট্রি স্থায়ীভাবে মুছবেন না; বাতিল (Void) হিসেবে চিহ্নিত হবে। চালিয়ে যাবেন?')){x.voided=true;x.voidedAt=new Date().toISOString();save()}}
+function editTx(id){let x=tx.find(t=>t.id===id);if(!x||x.voided)return;let v=prompt('সংশোধিত টাকার পরিমাণ',x.amount);if(v===null)return;let n=Number(v);if(!n||n<0)return alert('সঠিক টাকা দিন');x.amount=n;x.updatedAt=new Date().toISOString();let note=prompt('বিবরণ (পরিবর্তন না চাইলে আগের মতো রাখুন)',x.note||'');if(note!==null)x.note=note;save()}
+function renderProducts(){let el=document.getElementById('productTable');if(!el)return;el.innerHTML=products.length?'<table><tr><th>পণ্য</th><th>একক</th><th>বর্তমান স্টক (বেস ইউনিট)</th><th></th></tr>'+products.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.unit)}</td><td>${stockFor(p.name).toLocaleString('bn-BD')}</td><td><button class="danger" onclick="deleteProduct(${i})">মুছুন</button></td></tr>`).join('')+'</table>':'এখনও কোনো পণ্য যোগ করা হয়নি।'}
+function render(){fillSelects();renderProducts();let live=activeTx();let inc=live.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount),0),exp=live.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount),0);income.textContent=money(inc);expense.textContent=money(exp);balance.textContent=money(inc-exp);count.textContent=live.length;let q=(document.getElementById('search')?.value||'').toLowerCase(),arr=tx.filter(x=>(x.party+' '+x.note+' '+x.product).toLowerCase().includes(q));let t=document.getElementById('table');if(t)t.innerHTML=arr.length?'<table><tr><th>তারিখ</th><th>খাত</th><th>ধরন</th><th>টাকা</th><th>অ্যাকশন</th></tr>'+arr.map(x=>`<tr style="opacity:${x.voided?'.5':'1'}"><td>${new Date(x.date).toLocaleDateString('bn-BD')}</td><td>${esc(x.party||'—')}<br>${esc(x.product||'')}${x.qty?` — ${esc(x.qty)} ${esc(x.unit||'')}`:''}<br>${esc(x.note||'')}</td><td>${x.voided?'বাতিল':x.type==='income'?'আয়':'খরচ'}</td><td>${money(x.amount)}</td><td>${x.voided?'—':`<button onclick="editTx(${x.id})">এডিট</button> <button class="danger" onclick="del(${x.id})">Void</button>`}</td></tr>`).join('')+'</table>':'কোনো লেনদেন নেই';let r=document.getElementById('recent');if(r)r.innerHTML=live.slice(0,7).map(x=>`<p>${x.type==='income'?'🟢':'🔴'} ${esc(x.party||x.note||'লেনদেন')} — <b>${money(x.amount)}</b></p>`).join('')||'এখনও কোনো হিসাব নেই';}
+function fillPos(){let el=document.getElementById('posProduct');if(el)el.innerHTML=products.map((p,i)=>`<option value="${i}">${esc(p.name)} (${esc(p.unit)}) — স্টক ${stockFor(p.name).toLocaleString('bn-BD')}</option>`).join('')||'<option>আগে পণ্য যোগ করুন</option>';renderCart()}
+function cartAdd(){let i=Number(posProduct.value),p=products[i],q=Number(posQty.value),price=Number(posPrice.value);if(!p||q<=0||price<0)return alert('পণ্য, পরিমাণ ও মূল্য সঠিক দিন');cart.push({name:p.name,unit:p.unit,qty:q,price,total:q*price});renderCart()}
+function renderCart(){let el=document.getElementById('cartView');if(!el)return;let sum=cart.reduce((a,x)=>a+x.total,0),discount=Number(document.getElementById('posDiscount')?.value||0);el.innerHTML=cart.length?'<table><tr><th>পণ্য</th><th>পরিমাণ</th><th>মোট</th></tr>'+cart.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.qty} ${esc(x.unit)}</td><td>${money(x.total)}</td></tr>`).join('')+`</table><b>সাবটোটাল: ${money(sum)} | ছাড়: ${money(discount)} | মোট: ${money(Math.max(0,sum-discount))}</b>`:'কার্ট খালি';}
+function checkout(){if(!cart.length)return alert('কার্টে পণ্য যোগ করুন');let total=Math.max(0,cart.reduce((a,x)=>a+x.total,0)-Number(posDiscount.value||0)),paid=Number(posPaid.value||0);if(paid<0||paid>total)return alert('প্রাপ্ত টাকা মোটের বেশি বা ঋণাত্মক হতে পারে না');let partyName=posParty.value.trim();cart.forEach(x=>tx.unshift({id:Date.now()+Math.random(),date:new Date().toISOString(),type:'income',amount:x.total,party:partyName,product:x.name,qty:x.qty,unit:x.unit,note:'POS বিক্রয়',voided:false}));if(Number(posDiscount.value||0)>0)tx.unshift({id:Date.now()+Math.random(),date:new Date().toISOString(),type:'expense',amount:Number(posDiscount.value),party:partyName,note:'POS ডিসকাউন্ট সমন্বয়',voided:false});if(paid<total){payments.push({id:Date.now(),date:new Date().toISOString(),party:partyName||'অজ্ঞাত কাস্টমার',amount:total-paid,type:'due',note:'POS বাকি'});}save();document.getElementById('receipt').innerHTML=`<h3>রানা হিসাব — বিক্রয় রসিদ</h3><p>কাস্টমার: ${esc(partyName||'সাধারণ')}</p><p>মোট: ${money(total)} | পেয়েছি: ${money(paid)} | বাকি: ${money(total-paid)}</p><button onclick="window.print()">রসিদ প্রিন্ট</button>`;cart=[];renderCart();}
+function makeReport(){let from=reportFrom.value?new Date(reportFrom.value+'T00:00:00'):new Date('2000-01-01'),to=reportTo.value?new Date(reportTo.value+'T23:59:59'):new Date('2100-01-01');let a=activeTx().filter(x=>new Date(x.date)>=from&&new Date(x.date)<=to),inc=a.filter(x=>x.type==='income').reduce((s,x)=>s+x.amount,0),exp=a.filter(x=>x.type==='expense').reduce((s,x)=>s+x.amount,0);reportResult.innerHTML=`<p>লেনদেন: ${a.length}</p><p>মোট আয়/বিক্রয়: <b>${money(inc)}</b></p><p>মোট খরচ/ক্রয়: <b>${money(exp)}</b></p><p>নিট পার্থক্য: <b>${money(inc-exp)}</b></p><p class="small">এটি প্রাথমিক নগদভিত্তিক সারাংশ; প্রকৃত লাভের জন্য বিক্রীত পণ্যের ক্রয়মূল্য/COGS ও অন্যান্য সমন্বয় প্রয়োজন।</p>`}
+function recordPayment(){let partyName=payParty.value.trim(),amount=Number(payAmount.value);if(!partyName||amount<=0)return alert('ব্যক্তির নাম ও সঠিক টাকা দিন');payments.push({id:Date.now(),date:new Date().toISOString(),party:partyName,amount,type:payType.value,note:payNote.value});save();payAmount.value='';payNote.value='';renderPayments();}
+function renderPayments(){let el=document.getElementById('paymentHistory');if(!el)return;el.innerHTML=payments.length?'<table><tr><th>তারিখ</th><th>ব্যক্তি</th><th>ধরন</th><th>টাকা</th><th>বিবরণ</th></tr>'+payments.slice().reverse().map(x=>`<tr><td>${new Date(x.date).toLocaleDateString('bn-BD')}</td><td>${esc(x.party)}</td><td>${x.type==='receive'?'আদায়':x.type==='pay'?'পরিশোধ':'বাকি'}</td><td>${money(x.amount)}</td><td>${esc(x.note||'')}</td></tr>`).join('')+'</table>':'এখনো পেমেন্ট নেই'}
+function backup(){let data={schemaVersion:2,exportedAt:new Date().toISOString(),transactions:tx,products,payments};let b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='rana-hisab-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
+function restoreData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!confirm('বর্তমান তথ্যের সঙ্গে ব্যাকআপের তথ্য প্রতিস্থাপন করবেন? আগে বর্তমান ব্যাকআপ নিন।'))return;tx=Array.isArray(d)?d:(d.transactions||[]);products=d.products||[];payments=d.payments||[];save();fillSelects();renderProducts();renderPayments();alert('রিস্টোর সম্পন্ন।');}catch{alert('ফাইলটি সঠিক JSON ব্যাকআপ নয়।')}e.target.value=''};r.readAsText(f)}
+// Command parser always previews and waits for confirmation before saving.
+function runCommand(){let s=command.value.trim();if(!s)return alert('কমান্ড লিখুন');let d=extractCommand(s);if(!d.amount)return result.innerHTML='<p>টাকার পরিমাণ বুঝতে পারিনি।</p>';result.innerHTML=`<div class="card"><b>সংরক্ষণের আগে যাচাই করুন</b><p>ধরন: ${d.type==='income'?'আয়/বিক্রয়':'খরচ/ক্রয়'}</p><p>টাকা: ${money(d.amount)}</p><p>ব্যক্তি: ${esc(d.party||'উল্লেখ নেই')}</p><p>পরিমাণ: ${esc(d.qty||'—')} ${esc(d.unit||'')}</p><p>বিবরণ: ${esc(d.note)}</p><button class="primary" onclick="confirmCommand()">ঠিক আছে, সংরক্ষণ করুন</button> <button onclick="result.innerHTML='কমান্ড বাতিল হয়েছে'">বাতিল</button></div>`;window.pendingCommand=d}
+function confirmCommand(){let d=window.pendingCommand;if(!d)return;addTx(d.type,d.amount,d.party,d.note,'',d.qty,d.unit);window.pendingCommand=null;result.innerHTML='<p class="ok">হিসাব সংরক্ষণ হয়েছে।</p>';command.value=''}
+function speak(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return alert('এই ব্রাউজারে ভয়েস ইনপুট নেই; লিখে কমান্ড দিন।');let r=new SR();r.lang='bn-BD';r.onresult=e=>{command.value=e.results[0][0].transcript;runCommand()};r.onerror=()=>alert('মাইক্রোফোন অনুমতি পরীক্ষা করুন');r.start()}
+// Initialize payment history and render upgraded views.
+render();
+
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
+</body></html>
