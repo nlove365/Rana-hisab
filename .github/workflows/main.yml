@@ -36,19 +36,15 @@ jobs:
           fi
           yes | "$SDKMANAGER" --licenses || true
           "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-
+        
       - name: Extract Android project
         run: |
           mkdir -p extracted
           unzip -q Rana-Hisab-Updated-Project-2026-11-19.zip -d extracted
-          WRAPPER=$(find extracted -type f -name gradlew | head -n 1)
-          if [ -z "$WRAPPER" ]; then
-            echo "ERROR: Gradle wrapper not found"
-            exit 1
-          fi
-          PROJECT_DIR=$(dirname "$WRAPPER")
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-          chmod +x "$WRAPPER"
+          echo "===== PROJECT FILES ====="
+          find extracted -maxdepth 5 -type f | sort | head -200
+          echo "===== GRADLE FILES ====="
+          find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "build.gradle" -o -name "build.gradle.kts" -o -name "gradlew" \)
 
       - name: Build debug APK
         run: |
