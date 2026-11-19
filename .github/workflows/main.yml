@@ -20,26 +20,34 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
 
-      - name: Install SDK packages
+      - name: Locate Android SDK
         run: |
-          yes | sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
+          echo "/usr/local/lib/android/sdk/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "/usr/local/lib/android/sdk/platform-tools" >> "$GITHUB_PATH"
+
+      - name: Install Android SDK packages
+        run: |
+          SDKMANAGER=$(find /usr/local/lib/android/sdk -name sdkmanager -type f | head -n 1)
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: sdkmanager not found"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses || true
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Extract Android project
         run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip
-          mkdir extracted
+          mkdir -p extracted
           unzip -q Rana-Hisab-Updated-Project-2026-11-19.zip -d extracted
-          WRAPPER=$(find extracted -name gradlew -type f | head -n 1)
+          WRAPPER=$(find extracted -type f -name gradlew | head -n 1)
           if [ -z "$WRAPPER" ]; then
-            echo "Gradle wrapper not found in project ZIP"
+            echo "ERROR: Gradle wrapper not found"
             exit 1
           fi
-          echo "PROJECT_DIR=$(dirname "$WRAPPER")" >> "$GITHUB_ENV"
+          PROJECT_DIR=$(dirname "$WRAPPER")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           chmod +x "$WRAPPER"
 
       - name: Build debug APK
