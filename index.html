@@ -24,7 +24,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>রানা হিসাব</h1><div class="sub">সহজ বাংলা হিসাব • লিখে বা মুখে কমান্ড দিন</div></div></header>
+<header><div class="wrap"><div style="display:flex;align-items:center;gap:12px"><img src="icon.svg" alt="রানা হিসাব লোগো" width="58" height="58" style="display:block;flex:0 0 58px;border-radius:14px;background:#fff;padding:4px"><div><h1>রানা হিসাব</h1><div class="sub">সহজ বাংলা হিসাব • লিখে বা মুখে কমান্ড দিন</div></div></div></div></header>
 <div class="wrap">
 <nav>
 <button onclick="show('dash')">ড্যাশবোর্ড</button><button onclick="show('add')">দ্রুত হিসাব</button><button onclick="show('products')">পণ্য</button><button onclick="show('list')">লেনদেন</button><button onclick="show('cmd')">🎙️ স্মার্ট কমান্ড</button><button onclick="show('photo')">📷 ছবি</button><button onclick="show('pos')">🛒 POS</button><button onclick="show('reports')">📊 রিপোর্ট</button><button onclick="show('payments')">💳 পেমেন্ট</button><button onclick="backup()">ব্যাকআপ</button><button onclick="restore.click()">রিস্টোর</button>
@@ -289,4 +289,10 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
 </script>
+
+<footer class="app-copyright" style="margin:28px 0 12px;padding:18px 12px;text-align:center;color:#667085;font-size:12px;line-height:1.8;border-top:1px solid #e5eaf1">
+  <strong>© 2026 স্বপ্নময় ইনক বিডি</strong><br>
+  রানা হিসাব সফটওয়্যারটি স্বপ্নময় ইনক বিডি-এর মালিকানাধীন, যা স্বপ্নময় গ্রুপের একটি প্রতিষ্ঠান।<br>
+  সর্বস্বত্ব সংরক্ষিত।
+</footer>
 </body></html>
