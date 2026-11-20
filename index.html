@@ -72,10 +72,13 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <section id="products" class="hidden">
 <div class="card"><h2>📦 পণ্যের তালিকা</h2>
 <div class="row">
+<div><label>পণ্যের ক্যাটাগরি</label><select id="pcategory"></select></div>
 <div><label>পণ্যের নাম</label><input id="pname" placeholder="যেমন চাল"></div>
-<div><label>ডিফল্ট একক</label><select id="punit"></select></div>
 </div>
-<p><button class="primary" onclick="addProduct()">➕ পণ্য যোগ করুন</button></p>
+<div class="row"><div><label>ডিফল্ট একক</label><select id="punit"></select></div>
+<div><label>ক্যাটাগরি অনুযায়ী দেখুন</label><select id="productCategoryFilter" onchange="renderProducts()"><option value="">সব ক্যাটাগরি</option></select></div></div>
+<p><button class="primary" onclick="addProduct()">➕ পণ্য যোগ করুন</button> <button onclick="seedCatalog()">📚 সম্পূর্ণ পণ্যের তালিকা যুক্ত করুন</button></p>
+<div class="hint">প্রতিটি পণ্যের ক্যাটাগরি ও একক নির্বাচন করুন। নতুন পণ্যও নিজের মতো যোগ করতে পারবেন।</div>
 <div id="productTable"></div>
 </div></section>
 
@@ -106,23 +109,66 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <script>
 let tx=JSON.parse(localStorage.getItem('hisabPro')||'[]');
 let products=JSON.parse(localStorage.getItem('hisabProducts')||'[]');
-const units=['টি','কেজি','গ্রাম','লিটার','মিলিলিটার','প্যাকেট','বস্তা','কার্টন','ডজন','মিটার','ফুট','জোড়া','বোতল','বক্স','অন্যান্য'];
+const units=['টি','কেজি','গ্রাম','লিটার','মিলিলিটার','প্যাকেট','বস্তা','কার্টন','ডজন','মিটার','ফুট','জোড়া','বোতল','বক্স','সেট','রোল','জোড়া','ক্যান','গ্যালন','অন্যান্য'];
+const categories=['মুদিপণ্য','চাল-ডাল-শস্য','মসলা','তেল-ঘি','তরল খাবার','শুকনো খাবার','ফল ও সবজি','মাছ ও মাংস','দুধ ও দুগ্ধজাত','বেকারি ও মিষ্টি','পানীয়','পোশাকপণ্য','জুতা ও ব্যাগ','কসমেটিকস','পরিচ্ছন্নতা ও গৃহস্থালি','রান্নাবান্না ও কিচেন','স্টেশনারি','ইলেকট্রনিক্স','হার্ডওয়্যার ও নির্মাণ','কৃষি ও বাগান','ঔষধ ও স্বাস্থ্যসামগ্রী','শিশু ও খেলনা','অন্যান্য'];
+const catalog={
+'মুদিপণ্য':'চাল,মসুর ডাল,মুগ ডাল,ছোলা,মটর ডাল,আটা,ময়দা,সুজি,চিনি,লবণ,গুড়া দুধ,চা পাতা,কফি,বিস্কুট,নুডলস,সেমাই,মুড়ি,চিড়া,খই,পাউরুটি',
+'চাল-ডাল-শস্য':'মিনিকেট চাল,নাজিরশাইল চাল,আটাশ চাল,বাসমতি চাল,লাল চাল,কালোজিরা চাল,মসুর ডাল,মুগ ডাল,মাসকলাই ডাল,খেসারি ডাল,অড়হর ডাল,গম,ভুট্টা,যব',
+'মসলা':'হলুদ গুঁড়া,মরিচ গুঁড়া,ধনিয়া গুঁড়া,জিরা গুঁড়া,গরম মসলা,এলাচ,দারুচিনি,লবঙ্গ,তেজপাতা,গোলমরিচ,সরিষা,মেথি,পাঁচফোড়ন,আদা,রসুন',
+'তেল-ঘি':'সয়াবিন তেল,সরিষার তেল,সূর্যমুখী তেল,অলিভ অয়েল,নারিকেল তেল,ঘি,ডালডা,মাখন',
+'তরল খাবার':'দুধ,পাস্তুরিত দুধ,টক দই,মিষ্টি দই,লাচ্ছি,জুস,আমের জুস,কমলার জুস,সিরাপ,মধু,ভিনেগার,সয়া সস,টমেটো সস,চিলি সস',
+'শুকনো খাবার':'কিসমিস,খেজুর,বাদাম,কাঠবাদাম,কাজুবাদাম,পেস্তা,আখরোট,খুবানি,শুকনা ডুমুর,চানাচুর,চিপস,পপকর্ন,চকলেট,ক্যান্ডি',
+'ফল ও সবজি':'আলু,পেঁয়াজ,রসুন,আদা,টমেটো,বেগুন,লাউ,কুমড়া,শসা,গাজর,ফুলকপি,বাঁধাকপি,মুলা,কাঁচামরিচ,ধনেপাতা,লেবু,আপেল,কলা,কমলা,আম,পেয়ারা,পেঁপে,আনারস,তরমুজ,আঙুর',
+'মাছ ও মাংস':'রুই মাছ,কাতলা মাছ,ইলিশ মাছ,পাঙ্গাস মাছ,তেলাপিয়া মাছ,চিংড়ি,কৈ মাছ,মুরগি,ব্রয়লার মুরগি,গরুর মাংস,খাসির মাংস,হাঁস,ডিম',
+'দুধ ও দুগ্ধজাত':'গরুর দুধ,প্যাকেট দুধ,গুঁড়া দুধ,দই,মিষ্টি দই,টক দই,পনির,চিজ,মাখন,ক্রিম',
+'বেকারি ও মিষ্টি':'পাউরুটি,বনরুটি,কেক,পেস্ট্রি,টোস্ট,বিস্কুট,রসগোল্লা,সন্দেশ,চমচম,লাড্ডু,জিলাপি,মিষ্টি',
+'পানীয়':'বোতল পানি,মিনারেল ওয়াটার,কোমল পানীয়,কোল্ড ড্রিংকস,এনার্জি ড্রিংক,চা,কফি,শরবত,ডাবের পানি',
+'পোশাকপণ্য':'টি-শার্ট,শার্ট,প্যান্ট,জিন্স,পাঞ্জাবি,ফতুয়া,লুঙ্গি,শাড়ি,থ্রি-পিস,কামিজ,ওড়না,হিজাব,বোরকা,সালোয়ার,শিশুদের পোশাক,গেঞ্জি,অন্তর্বাস,মোজা,ক্যাপ,বেল্ট',
+'জুতা ও ব্যাগ':'স্যান্ডেল,জুতা,স্পোর্টস জুতা,স্কুল জুতা,হাই হিল,স্লিপার,স্কুল ব্যাগ,হ্যান্ডব্যাগ,ট্রাভেল ব্যাগ,মানিব্যাগ',
+'কসমেটিকস':'ফেসওয়াশ,ময়েশ্চারাইজার,ক্রিম,সানস্ক্রিন,লোশন,শ্যাম্পু,কন্ডিশনার,চুলের তেল,হেয়ার জেল,সাবান,বডি স্প্রে,পারফিউম,লিপস্টিক,পাউডার,কাজল,নেইলপলিশ,মেকআপ কিট,টুথপেস্ট,টুথব্রাশ',
+'পরিচ্ছন্নতা ও গৃহস্থালি':'ডিটারজেন্ট পাউডার,লিকুইড ডিটারজেন্ট,ডিশওয়াশ,টয়লেট ক্লিনার,ফ্লোর ক্লিনার,ব্লিচিং পাউডার,টিস্যু,ন্যাপকিন,মশার কয়েল,মশার স্প্রে,ঝাড়ু,মপ,ডাস্টবিন,স্পঞ্জ',
+'রান্নাবান্না ও কিচেন':'হাঁড়ি,পাতিল,কড়াই,ফ্রাইপ্যান,প্রেসার কুকার,রাইস কুকার,কেটলি,চামচ,খুন্তি,ছুরি,কাটিং বোর্ড,প্লেট,বাটি,গ্লাস,কাপ,থালা,গ্যাস লাইটার,রান্নার গ্যাস',
+'স্টেশনারি':'খাতা,কলম,পেন্সিল,রাবার,শার্পনার,স্কেল,মার্কার,হাইলাইটার,ফাইল,কাগজ,ডায়েরি,স্ট্যাপলার,আঠা,কাঁচি',
+'ইলেকট্রনিক্স':'মোবাইল ফোন,চার্জার,ডাটা কেবল,ইয়ারফোন,হেডফোন,পাওয়ার ব্যাংক,মেমোরি কার্ড,পেনড্রাইভ,বাল্ব,এলইডি লাইট,ফ্যান,রিমোট',
+'হার্ডওয়্যার ও নির্মাণ':'পেরেক,স্ক্রু,হাতুড়ি,প্লাস,স্ক্রু ড্রাইভার,রেঞ্চ,তালা,চাবি,রং,ব্রাশ,সিমেন্ট,বালু,ইট,পাইপ,তার,সুইচ,সকেট',
+'কৃষি ও বাগান':'সার,জৈব সার,বীজ,ধানের বীজ,সবজির বীজ,টব,বাগানের মাটি,কীটনাশক,পানির ঝাঁঝরি,কোদাল,কাস্তে',
+'ঔষধ ও স্বাস্থ্যসামগ্রী':'ব্যান্ডেজ,তুলা,গজ,মাস্ক,হ্যান্ড স্যানিটাইজার,থার্মোমিটার,ওআরএস,ভিটামিন,ফার্স্ট এইড বক্স',
+'শিশু ও খেলনা':'ডায়াপার,বেবি ওয়াইপস,বেবি লোশন,ফিডার,শিশু খাদ্য,খেলনা গাড়ি,পুতুল,বল,পাজল,রং পেন্সিল',
+'অন্যান্য':'উপহার সামগ্রী,প্যাকেট,কার্টন,অন্যান্য পণ্য'
+};
+function seedCatalog(){
+ const added=[];
+ Object.entries(catalog).forEach(([category,names])=>names.split(',').forEach(name=>{
+   if(!products.some(p=>p.name.toLowerCase()===name.toLowerCase())){
+     let unit=['চাল','মসুর ডাল','মুগ ডাল','আটা','ময়দা','চিনি','লবণ','আলু','পেঁয়াজ','রসুন','আদা','টমেটো','গরুর মাংস','মুরগি','মাছ','সয়াবিন তেল','দুধ','মধু','সার','বালু'].includes(name)?'কেজি':'টি';
+     if(['সয়াবিন তেল','সরিষার তেল','দুধ','মধু','ভিনেগার','জুস','সিরাপ'].includes(name))unit='লিটার';
+     products.push({name,unit,category});added.push(name);
+   }
+ }));
+ save();renderProducts();fillSelects();
+ alert('বাংলা পণ্যের তালিকা যুক্ত হয়েছে। নতুন যোগ হয়েছে '+added.length+'টি পণ্য।');
+}
 const money=n=>'৳'+Number(n||0).toLocaleString('bn-BD');
 function save(){localStorage.setItem('hisabPro',JSON.stringify(tx));localStorage.setItem('hisabProducts',JSON.stringify(products));render();}
 function show(id){['dash','add','list','cmd','products','photo'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id));render()}
 function fillSelects(){
   unit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
   punit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
-  product.innerHTML='<option value="">পণ্য নির্বাচন করুন</option>'+products.map((p,i)=>`<option value="${i}">${esc(p.name)} (${esc(p.unit)})</option>`).join('');
+  const cat=document.getElementById('pcategory');
+  if(cat)cat.innerHTML=categories.map(x=>`<option>${x}</option>`).join('');
+  const filter=document.getElementById('productCategoryFilter');
+  if(filter){const selected=filter.value;filter.innerHTML='<option value="">সব ক্যাটাগরি</option>'+categories.map(x=>`<option>${x}</option>`).join('');filter.value=selected;}
+  products.forEach(p=>{if(!p.category)p.category='অন্যান্য';});
+  product.innerHTML='<option value="">পণ্য নির্বাচন করুন</option>'+products.map((p,i)=>`<option value="${i}">${esc(p.name)} — ${esc(p.category)} (${esc(p.unit)})</option>`).join('');
 }
 function clearForm(){
   amount.value=''; party.value=''; note.value=''; qty.value=''; newproduct.value=''; product.value='';
 }
 function addProduct(){
-  const n=pname.value.trim(), u=punit.value||'টি';
+  const n=pname.value.trim(), u=punit.value||'টি', category=pcategory.value||'অন্যান্য';
   if(!n)return alert('পণ্যের নাম দিন');
   if(products.some(p=>p.name.toLowerCase()===n.toLowerCase()))return alert('এই পণ্য আগে থেকেই আছে');
-  products.push({name:n,unit:u}); save(); pname.value=''; renderProducts(); fillSelects();
+  products.push({name:n,unit:u,category}); save(); pname.value=''; renderProducts(); fillSelects();
 }
 function renderProducts(){
   productTable.innerHTML=products.length?'<table><tr><th>পণ্য</th><th>একক</th><th></th></tr>'+
@@ -278,9 +324,9 @@ function addTx(t=null,a=null,p='',n='',prod='',q='',u=''){
 function del(id){let x=tx.find(t=>t.id===id);if(!x)return;if(confirm('এন্ট্রি স্থায়ীভাবে মুছবেন না; বাতিল (Void) হিসেবে চিহ্নিত হবে। চালিয়ে যাবেন?')){x.voided=true;x.voidedAt=new Date().toISOString();save()}}
 function editTx(id){let x=tx.find(t=>t.id===id);if(!x||x.voided)return;let v=prompt('সংশোধিত টাকার পরিমাণ',x.amount);if(v===null)return;let n=Number(v);if(!Number.isFinite(n)||n<=0)return alert('সঠিক টাকা দিন');let note=prompt('বিবরণ (পরিবর্তন না চাইলে আগের মতো রাখুন)',x.note||'');if(note===null)return;let changedAt=new Date().toISOString();x.auditLog=Array.isArray(x.auditLog)?x.auditLog:[];x.auditLog.push({changedAt,previous:{amount:x.amount,note:x.note||''},updatedBy:'ডিভাইস ব্যবহারকারী'});x.amount=n;x.note=note;x.updatedAt=changedAt;save()}
 function showAudit(id){let x=tx.find(t=>t.id===id);if(!x)return;let h=Array.isArray(x.auditLog)?x.auditLog:[];alert(h.length?'সংশোধনের ইতিহাস:\\n'+h.map((v,i)=>(i+1)+'. '+new Date(v.changedAt).toLocaleString('bn-BD')+'\\nআগের টাকা: '+money(v.previous?.amount)+'\\nআগের বিবরণ: '+(v.previous?.note||'—')).join('\\n\\n'):'এই লেনদেনে কোনো সংশোধনের ইতিহাস নেই।')}
-function renderProducts(){let el=document.getElementById('productTable');if(!el)return;el.innerHTML=products.length?'<table><tr><th>পণ্য</th><th>একক</th><th>বর্তমান স্টক (বেস ইউনিট)</th><th></th></tr>'+products.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.unit)}</td><td>${stockFor(p.name).toLocaleString('bn-BD')}</td><td><button class="danger" onclick="deleteProduct(${i})">মুছুন</button></td></tr>`).join('')+'</table>':'এখনও কোনো পণ্য যোগ করা হয়নি।'}
+function renderProducts(){let el=document.getElementById('productTable');if(!el)return;let filter=document.getElementById('productCategoryFilter')?.value||'';let list=products.map((p,i)=>({p,i})).filter(x=>!filter||(x.p.category||'অন্যান্য')===filter);el.innerHTML=list.length?'<table><tr><th>ক্যাটাগরি</th><th>পণ্য</th><th>একক</th><th>বর্তমান স্টক</th><th></th></tr>'+list.map(({p,i})=>`<tr><td>${esc(p.category||'অন্যান্য')}</td><td>${esc(p.name)}</td><td>${esc(p.unit)}</td><td>${stockFor(p.name).toLocaleString('bn-BD')}</td><td><button class="danger" onclick="deleteProduct(${i})">মুছুন</button></td></tr>`).join('')+'</table>':'এই ক্যাটাগরিতে পণ্য নেই।'}
 function render(){fillSelects();renderProducts();let live=activeTx();let inc=live.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount),0),exp=live.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount),0);income.textContent=money(inc);expense.textContent=money(exp);balance.textContent=money(inc-exp);count.textContent=live.length;let q=(document.getElementById('search')?.value||'').toLowerCase(),arr=tx.filter(x=>(x.party+' '+x.note+' '+x.product).toLowerCase().includes(q));let t=document.getElementById('table');if(t)t.innerHTML=arr.length?'<table><tr><th>তারিখ</th><th>খাত</th><th>ধরন</th><th>টাকা</th><th>অ্যাকশন</th></tr>'+arr.map(x=>`<tr style="opacity:${x.voided?'.5':'1'}"><td>${new Date(x.date).toLocaleDateString('bn-BD')}</td><td>${esc(x.party||'—')}<br>${esc(x.product||'')}${x.qty?` — ${esc(x.qty)} ${esc(x.unit||'')}`:''}<br>${esc(x.note||'')}</td><td>${x.voided?'বাতিল':x.type==='income'?'আয়':'খরচ'}</td><td>${money(x.amount)}</td><td>${x.voided?'—':`<button onclick="editTx(${x.id})">এডিট</button> <button onclick="showAudit(${x.id})">ইতিহাস</button> <button class="danger" onclick="del(${x.id})">Void</button>`}</td></tr>`).join('')+'</table>':'কোনো লেনদেন নেই';let r=document.getElementById('recent');if(r)r.innerHTML=live.slice(0,7).map(x=>`<p>${x.type==='income'?'🟢':'🔴'} ${esc(x.party||x.note||'লেনদেন')} — <b>${money(x.amount)}</b></p>`).join('')||'এখনও কোনো হিসাব নেই';}
-function fillPos(){let el=document.getElementById('posProduct');if(el)el.innerHTML=products.map((p,i)=>`<option value="${i}">${esc(p.name)} (${esc(p.unit)}) — স্টক ${stockFor(p.name).toLocaleString('bn-BD')}</option>`).join('')||'<option>আগে পণ্য যোগ করুন</option>';renderCart()}
+function fillPos(){let el=document.getElementById('posProduct');if(el)el.innerHTML=products.map((p,i)=>`<option value="${i}">${esc(p.name)} — ${esc(p.category||'অন্যান্য')} (${esc(p.unit)}) — স্টক ${stockFor(p.name).toLocaleString('bn-BD')}</option>`).join('')||'<option>আগে পণ্য যোগ করুন</option>';renderCart()}
 function cartAdd(){let i=Number(posProduct.value),p=products[i],q=Number(posQty.value),price=Number(posPrice.value);if(!p||q<=0||price<0)return alert('পণ্য, পরিমাণ ও মূল্য সঠিক দিন');cart.push({name:p.name,unit:p.unit,qty:q,price,total:q*price});renderCart()}
 function renderCart(){let el=document.getElementById('cartView');if(!el)return;let sum=cart.reduce((a,x)=>a+x.total,0),discount=Number(document.getElementById('posDiscount')?.value||0);el.innerHTML=cart.length?'<table><tr><th>পণ্য</th><th>পরিমাণ</th><th>মোট</th></tr>'+cart.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.qty} ${esc(x.unit)}</td><td>${money(x.total)}</td></tr>`).join('')+`</table><b>সাবটোটাল: ${money(sum)} | ছাড়: ${money(discount)} | মোট: ${money(Math.max(0,sum-discount))}</b>`:'কার্ট খালি';}
 function checkout(){if(!cart.length)return alert('কার্টে পণ্য যোগ করুন');let total=Math.max(0,cart.reduce((a,x)=>a+x.total,0)-Number(posDiscount.value||0)),paid=Number(posPaid.value||0);if(paid<0||paid>total)return alert('প্রাপ্ত টাকা মোটের বেশি বা ঋণাত্মক হতে পারে না');let partyName=posParty.value.trim();cart.forEach(x=>tx.unshift({id:Date.now()+Math.random(),date:new Date().toISOString(),type:'income',amount:x.total,party:partyName,product:x.name,qty:x.qty,unit:x.unit,note:'POS বিক্রয়',voided:false}));if(Number(posDiscount.value||0)>0)tx.unshift({id:Date.now()+Math.random(),date:new Date().toISOString(),type:'expense',amount:Number(posDiscount.value),party:partyName,note:'POS ডিসকাউন্ট সমন্বয়',voided:false});if(paid<total){payments.push({id:Date.now(),date:new Date().toISOString(),party:partyName||'অজ্ঞাত কাস্টমার',amount:total-paid,type:'due',note:'POS বাকি'});}save();document.getElementById('receipt').innerHTML=`<h3>রানা হিসাব — বিক্রয় রসিদ</h3><p>কাস্টমার: ${esc(partyName||'সাধারণ')}</p><p>মোট: ${money(total)} | পেয়েছি: ${money(paid)} | বাকি: ${money(total-paid)}</p><button onclick="window.print()">রসিদ প্রিন্ট</button>`;cart=[];renderCart();}
