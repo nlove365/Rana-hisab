@@ -213,7 +213,7 @@ function seedCatalog(showNotice=true){
  if(showNotice)alert('বাংলা পণ্যের তালিকা যুক্ত হয়েছে। নতুন যোগ হয়েছে '+added.length+'টি পণ্য।');
 }
 const money=n=>'৳'+Number(n||0).toLocaleString('bn-BD');
-function save(){localStorage.setItem('hisabPro',JSON.stringify(tx));localStorage.setItem('hisabProducts',JSON.stringify(products));render();}
+function save(){localStorage.setItem('hisabPro',JSON.stringify(tx));localStorage.setItem('hisabProducts',JSON.stringify(products));localStorage.setItem('ranaPayments',JSON.stringify(payments||[]));render();}
 function show(id){['dash','add','list','cmd','products','photo','pos','reports','payments'].forEach(x=>{const el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render()}
 function fillSelects(){
   unit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
@@ -302,18 +302,18 @@ function speak(){
   r.onerror=e=>{result.innerHTML='<p>⚠️ ভয়েস ইনপুট পাওয়া যায়নি। Chrome-এ Microphone Permission দিন। '+(e.error||'')+'</p>';}
 }
 function renderDashboard(){
- const now=new Date(), todayKey=now.toLocaleDateString('en-CA'), monthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
- const dayTx=tx.filter(x=>new Date(x.date).toLocaleDateString('en-CA')===todayKey);
+ const now=new Date(), dateKey=d=>{const v=new Date(d);return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0')}, todayKey=dateKey(now), monthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'), live=activeTx();
+ const dayTx=live.filter(x=>dateKey(x.date)===todayKey);
  const todayIncome=dayTx.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount||0),0);
  const ts=document.getElementById('todaySales');if(ts)ts.textContent=money(todayIncome);
  const dd=document.getElementById('dashDate');if(dd)dd.textContent=now.toLocaleDateString('bn-BD',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
- const monthTx=tx.filter(x=>String(x.date||'').slice(0,7)===monthKey);
+ const monthTx=live.filter(x=>{const d=new Date(x.date);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===monthKey;});
  const mi=monthTx.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount||0),0);
  const me=monthTx.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount||0),0);
  const ms=document.getElementById('monthSummary');
  if(ms)ms.innerHTML='<div class="mini-line"><span>মাসের মোট আয়</span><strong style="color:#128353">'+money(mi)+'</strong></div><div class="mini-line"><span>মাসের মোট খরচ</span><strong style="color:#d65c49">'+money(me)+'</strong></div><div class="mini-line"><span>নিট পার্থক্য</span><strong>'+money(mi-me)+'</strong></div><div class="mini-line"><span>এই মাসের লেনদেন</span><strong>'+monthTx.length.toLocaleString('bn-BD')+'টি</strong></div>';
  const days=[];
- for(let i=6;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i),key=d.toLocaleDateString('en-CA'),items=tx.filter(x=>new Date(x.date).toLocaleDateString('en-CA')===key);days.push({label:d.toLocaleDateString('bn-BD',{day:'numeric',month:'short'}),inc:items.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount||0),0),exp:items.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount||0),0)});}
+ for(let i=6;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i),key=dateKey(d),items=live.filter(x=>dateKey(x.date)===key);days.push({label:d.toLocaleDateString('bn-BD',{day:'numeric',month:'short'}),inc:items.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount||0),0),exp:items.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount||0),0)});}
  const max=Math.max(1,...days.flatMap(d=>[d.inc,d.exp]));
  const bars=document.getElementById('dashBars');
  if(bars)bars.innerHTML=days.map(d=>'<div class="bar-day"><div class="bar-pair"><i class="bar in" title="আয় '+money(d.inc)+'" style="height:'+Math.max(3,d.inc/max*100)+'%"></i><i class="bar out" title="খরচ '+money(d.exp)+'" style="height:'+Math.max(3,d.exp/max*100)+'%"></i></div><small>'+d.label+'</small></div>').join('');
