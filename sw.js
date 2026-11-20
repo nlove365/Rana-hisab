@@ -1,5 +1,5 @@
-const CACHE = 'rana-hisab-v2';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'rana-hisab-v3';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './sw.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)));
   self.skipWaiting();
