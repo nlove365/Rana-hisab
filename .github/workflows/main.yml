@@ -38,6 +38,15 @@ jobs:
           test -f extracted/Rana-Hisab-Android/settings.gradle
           test -f extracted/Rana-Hisab-Android/app/build.gradle
 
+      - name: Sync latest app assets into Android project
+        run: |
+          ASSET_DIR=$(find extracted/Rana-Hisab-Android -type d -path '*/src/main/assets' | head -n 1)
+          test -n "$ASSET_DIR"
+          cp index.html manifest.webmanifest icon.svg "$ASSET_DIR"/
+          if [ -f sw.js ]; then cp sw.js "$ASSET_DIR"/; fi
+          echo "Synced latest web app files into $ASSET_DIR"
+          grep -q "স্বপ্নময় ইনক বিডি" "$ASSET_DIR/index.html"
+
       - name: Install Gradle 8.7
         run: |
           curl -fsSL https://services.gradle.org/distributions/gradle-8.7-bin.zip -o /tmp/gradle.zip
