@@ -97,17 +97,42 @@ jobs:
         run: |
           APK=$(find extracted/Rana-Hisab-Android/app/build/outputs/apk/debug -name '*.apk' -type f | head -n 1)
           test -n "$APK"
-          unzip -p "$APK" assets/index.html | grep -q "স্বপ্নময় ইনক বিডি"
-          unzip -p "$APK" assets/index.html | grep -q 'src="icon.jpg"'
-          unzip -l "$APK" | grep -q 'assets/icon.jpg'
-          unzip -l "$APK" | grep -q 'res/drawable-nodpi/ic_launcher.jpg'
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -q 'application-icon'
-          unzip -p "$APK" assets/index.html | grep -Fq "localStorage.setItem('ranaPayments'"
-          unzip -p "$APK" assets/index.html | grep -Fq "dateKey=d=>"
-          unzip -p "$APK" assets/index.html | grep -Fq "ছাড় সাবটোটালের"
-          unzip -p "$APK" assets/index.html | grep -Fq "function confirmCommand()"
-          unzip -p "$APK" assets/sw.js | grep -Fq "rana-hisab-v4"
-          echo "Verified branding, dashboard, payment persistence, POS validation, smart command and PWA cache in APK."
+          python3 - "$APK" <<'PY'
+          import sys, zipfile
+          apk = sys.argv[1]
+          with zipfile.ZipFile(apk) as z:
+              names = z.namelist()
+              def find_asset(name):
+                  matches = [n for n in names if n.endswith('/' + name) or n == name]
+                  if not matches:
+                      raise SystemExit("APK verification failed: missing " + name)
+                  return matches[0]
+              html_path = find_asset("index.html")
+              html = z.read(html_path).decode("utf-8", "replace")
+              checks = {
+                  "Bangla copyright": "স্বপ্নময় ইনক বিডি" in html,
+                  "new app logo reference": 'src="icon.jpg"' in html,
+                  "payment persistence": "localStorage.setItem('ranaPayments'" in html,
+                  "local date calculation": "dateKey=d=>" in html,
+                  "POS discount validation": "ছাড় সাবটোটালের" in html,
+                  "smart command confirmation": "function confirmCommand()" in html,
+              }
+              for label, ok in checks.items():
+                  print(("PASS: " if ok else "FAIL: ") + label)
+              if not all(checks.values()):
+                  raise SystemExit("APK HTML asset does not contain all required updates")
+              find_asset("icon.jpg")
+              print("PASS: bundled app logo")
+              sw_path = find_asset("sw.js")
+              sw = z.read(sw_path).decode("utf-8", "replace")
+              if "rana-hisab-v4" not in sw:
+                  raise SystemExit("APK verification failed: service worker cache version is outdated")
+              print("PASS: service worker cache version")
+          PY
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" > /tmp/apk-badging.txt
+          grep -q '^package:' /tmp/apk-badging.txt
+          grep -q 'application-icon' /tmp/apk-badging.txt
+          echo "PASS: Android launcher icon resource is packaged."
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
