@@ -52,7 +52,8 @@ jobs:
         run: |
           ASSET_DIR=$(find extracted/Rana-Hisab-Android -type d -path '*/src/main/assets' | head -n 1)
           test -n "$ASSET_DIR"
-          cp index.html manifest.webmanifest icon.svg "$ASSET_DIR"/
+          base64 -d app-icon.jpg.base64 > icon.jpg
+          cp index.html manifest.webmanifest icon.svg icon.jpg "$ASSET_DIR"/
           if [ -f sw.js ]; then cp sw.js "$ASSET_DIR"/; fi
           echo "Synced latest web app files into $ASSET_DIR"
           grep -q "স্বপ্নময় ইনক বিডি" "$ASSET_DIR/index.html"
@@ -61,6 +62,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import os
+          import shutil
           import xml.etree.ElementTree as ET
           project = "extracted/Rana-Hisab-Android/app/src/main"
           manifest = os.path.join(project, "AndroidManifest.xml")
@@ -74,19 +76,10 @@ jobs:
           app.set(android + "roundIcon", "@drawable/ic_launcher")
           ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
           tree.write(manifest, encoding="utf-8", xml_declaration=True)
-          res = os.path.join(project, "res", "drawable")
+          res = os.path.join(project, "res", "drawable-nodpi")
           os.makedirs(res, exist_ok=True)
-          icon = """<vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="48dp" android:height="48dp"
-              android:viewportWidth="512" android:viewportHeight="512">
-            <path android:fillColor="#183B70" android:pathData="M0,0h512v512h-512z"/>
-            <path android:fillColor="#FFFFFF" android:pathData="M112,88h288c22,0 40,18 40,40v256c0,22 -18,40 -40,40h-288c-22,0 -40,-18 -40,-40v-256c0,-22 18,-40 40,-40z"/>
-            <path android:fillColor="#2876D8" android:pathData="M144,176h224v28h-224zM144,244h224v28h-224zM144,312h144v28h-144z"/>
-            <path android:fillColor="#16A36A" android:pathData="M352,312a36,36 0,1 0,72 0a36,36 0,1 0,-72 0"/>
-          </vector>"""
-          with open(os.path.join(res, "ic_launcher.xml"), "w", encoding="utf-8") as f:
-              f.write(icon)
-          print("Android launcher icon configured.")
+          shutil.copyfile("icon.jpg", os.path.join(res, "ic_launcher.jpg"))
+          print("New Rana Hisab logo installed as Android launcher icon.")
           PY
 
       - name: Install Gradle 8.7
@@ -105,9 +98,9 @@ jobs:
           APK=$(find extracted/Rana-Hisab-Android/app/build/outputs/apk/debug -name '*.apk' -type f | head -n 1)
           test -n "$APK"
           unzip -p "$APK" assets/index.html | grep -q "স্বপ্নময় ইনক বিডি"
-          unzip -p "$APK" assets/index.html | grep -q 'alt="রানা হিসাব লোগো"'
-          unzip -l "$APK" | grep -q 'assets/icon.svg'
-          unzip -l "$APK" | grep -q 'res/drawable/ic_launcher.xml'
+          unzip -p "$APK" assets/index.html | grep -q 'src="icon.jpg"'
+          unzip -l "$APK" | grep -q 'assets/icon.jpg'
+          unzip -l "$APK" | grep -q 'res/drawable-nodpi/ic_launcher.jpg'
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -q 'application-icon'
           unzip -p "$APK" assets/index.html | grep -Fq "localStorage.setItem('ranaPayments'"
           unzip -p "$APK" assets/index.html | grep -Fq "dateKey=d=>"
