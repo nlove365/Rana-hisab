@@ -51,6 +51,38 @@ jobs:
           echo "Synced latest web app files into $ASSET_DIR"
           grep -q "স্বপ্নময় ইনক বিডি" "$ASSET_DIR/index.html"
 
+      - name: Set Android launcher icon
+        run: |
+          python3 - <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          project = "extracted/Rana-Hisab-Android/app/src/main"
+          manifest = os.path.join(project, "AndroidManifest.xml")
+          tree = ET.parse(manifest)
+          root = tree.getroot()
+          android = "{http://schemas.android.com/apk/res/android}"
+          app = root.find("application")
+          if app is None:
+              raise SystemExit("AndroidManifest.xml has no application element")
+          app.set(android + "icon", "@drawable/ic_launcher")
+          app.set(android + "roundIcon", "@drawable/ic_launcher")
+          ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
+          tree.write(manifest, encoding="utf-8", xml_declaration=True)
+          res = os.path.join(project, "res", "drawable")
+          os.makedirs(res, exist_ok=True)
+          icon = """<vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="48dp" android:height="48dp"
+              android:viewportWidth="512" android:viewportHeight="512">
+            <path android:fillColor="#183B70" android:pathData="M0,0h512v512h-512z"/>
+            <path android:fillColor="#FFFFFF" android:pathData="M112,88h288c22,0 40,18 40,40v256c0,22 -18,40 -40,40h-288c-22,0 -40,-18 -40,-40v-256c0,-22 18,-40 40,-40z"/>
+            <path android:fillColor="#2876D8" android:pathData="M144,176h224v28h-224zM144,244h224v28h-224zM144,312h144v28h-144z"/>
+            <path android:fillColor="#16A36A" android:pathData="M352,312a36,36 0,1 0,72 0a36,36 0,1 0,-72 0"/>
+          </vector>"""
+          with open(os.path.join(res, "ic_launcher.xml"), "w", encoding="utf-8") as f:
+              f.write(icon)
+          print("Android launcher icon configured.")
+          PY
+
       - name: Install Gradle 8.7
         run: |
           curl -fsSL https://services.gradle.org/distributions/gradle-8.7-bin.zip -o /tmp/gradle.zip
@@ -69,7 +101,9 @@ jobs:
           unzip -p "$APK" assets/index.html | grep -q "স্বপ্নময় ইনক বিডি"
           unzip -p "$APK" assets/index.html | grep -q 'alt="রানা হিসাব লোগো"'
           unzip -l "$APK" | grep -q 'assets/icon.svg'
-          echo "Verified latest HTML, copyright and app logo are packaged in APK."
+          unzip -l "$APK" | grep -q 'res/drawable/ic_launcher.xml'
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -q 'application-icon'
+          echo "Verified HTML, copyright, app logo and Android launcher icon in APK."
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
