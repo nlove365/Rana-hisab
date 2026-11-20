@@ -10,17 +10,26 @@
 <title>রানা হিসাব</title>
 <style>
 *{box-sizing:border-box}body{margin:0;overflow-x:hidden;font-family:system-ui,-apple-system,"Noto Sans Bengali",sans-serif;background:#f4f7fb;color:#172033}
-header{background:linear-gradient(135deg,#183b70,#2876d8);color:white;padding:22px 18px}
-h1{margin:0;font-size:28px}.sub{opacity:.85;margin-top:5px}
-.wrap{max-width:1100px;margin:auto;padding:16px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.card{background:white;border-radius:18px;padding:18px;box-shadow:0 5px 20px #193b7012}.small{font-size:13px;color:#68758a}.ok{color:#087443}.actions{display:flex;flex-wrap:wrap;gap:8px}.num{font-size:25px;font-weight:800;margin-top:6px}
-nav{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}button{border:0;border-radius:12px;padding:11px 15px;background:#e9eef7;color:#17345d;font-weight:700;cursor:pointer}
-button.primary{background:#246bce;color:white}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}input,select{width:100%;padding:13px;border:1px solid #d7deea;border-radius:12px;font-size:16px}label{display:block;margin:8px 0 5px;font-weight:700}
+header{background:linear-gradient(125deg,#101d3b 0%,#183b70 54%,#2876d8 100%);color:white;padding:22px 18px 26px;position:relative;overflow:hidden}
+header:after{content:"";position:absolute;width:240px;height:240px;border:1px solid #ffffff20;border-radius:50%;right:-75px;top:-125px;box-shadow:0 0 0 28px #ffffff08,0 0 0 58px #ffffff06}
+h1{margin:0;font-size:28px;letter-spacing:-.5px}.sub{opacity:.86;margin-top:5px}
+.wrap{max-width:1160px;margin:auto;padding:16px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.card{background:white;border:1px solid #e9eef6;border-radius:20px;padding:18px;box-shadow:0 8px 28px #193b700b}.small{font-size:13px;color:#68758a}.ok{color:#087443}.actions{display:flex;flex-wrap:wrap;gap:8px}.num{font-size:25px;font-weight:850;margin-top:6px;letter-spacing:-.5px}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}button{border:0;border-radius:12px;padding:11px 15px;background:#e9eef7;color:#17345d;font-weight:750;cursor:pointer;transition:transform .18s,box-shadow .18s}button:active{transform:scale(.98)}
+button.primary{background:linear-gradient(135deg,#2563eb,#1686d9);color:white;box-shadow:0 5px 14px #2563eb30}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}input,select{width:100%;padding:13px;border:1px solid #d7deea;border-radius:12px;font-size:16px}label{display:block;margin:8px 0 5px;font-weight:700}
 textarea{width:100%;padding:13px;border:1px solid #d7deea;border-radius:12px;min-height:90px;font-size:16px}
 table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;border-bottom:1px solid #edf0f5;text-align:left}th{background:#f7f9fc}
 .hidden{display:none}.danger{background:#ffe9e9;color:#b42318}.voice{display:flex;gap:8px}.hint{font-size:13px;color:#68758a;margin-top:7px}
-@media(max-width:750px){.grid{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr}table{font-size:13px}.wrap{padding:10px}nav button{flex:1 1 auto;min-width:105px}}
-@media(max-width:420px){.grid{grid-template-columns:1fr}.card{padding:14px}nav{display:grid;grid-template-columns:1fr 1fr}nav button{min-width:0;width:100%}.actions button{flex:1 1 45%}}
+.dash-welcome{display:flex;align-items:center;justify-content:space-between;gap:14px;background:linear-gradient(120deg,#14294e,#1d4e89 65%,#267bd2);color:white;border-radius:24px;padding:24px 25px;margin:2px 0 16px;box-shadow:0 14px 32px #163e7028;position:relative;overflow:hidden}
+.dash-welcome:after{content:"";position:absolute;width:220px;height:220px;border:1px solid #ffffff24;border-radius:50%;right:8%;top:-145px;box-shadow:0 0 0 24px #ffffff09,0 0 0 50px #ffffff07}
+.dash-welcome>*{position:relative;z-index:1}.dash-eyebrow{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#b9d9ff;font-weight:800}.dash-welcome h2{font-size:25px;margin:7px 0}.dash-date{color:#d8e8ff;font-size:13px}.dash-today{text-align:right;min-width:135px}.dash-today strong{display:block;font-size:25px;margin-top:5px}
+.stat-card{position:relative;overflow:hidden;min-height:116px}.stat-top{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#66758d;font-size:13px;font-weight:700}.stat-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:12px;background:#edf4ff;font-size:18px}.stat-card .num{font-size:24px;color:#172c4e}.stat-foot{font-size:11px;color:#8a96a8;margin-top:5px}.stat-card.income .stat-icon{background:#e8f8ef}.stat-card.expense .stat-icon{background:#fff0ed}.stat-card.balance .stat-icon{background:#eaf1ff}.stat-card.count .stat-icon{background:#f1edff}
+.dash-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:22px 2px 11px}.dash-section-title h3{margin:0;font-size:17px}.dash-section-title span{font-size:12px;color:#8290a4}
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.quick-action{display:flex;align-items:center;gap:11px;padding:14px;background:#fff;border:1px solid #e7edf6;border-radius:16px;box-shadow:0 5px 18px #193b7008;cursor:pointer;font-weight:750;color:#203657}.quick-action .qicon{width:39px;height:39px;border-radius:13px;display:grid;place-items:center;background:#edf4ff;font-size:19px}.quick-action:active{transform:scale(.98)}
+.dash-columns{display:grid;grid-template-columns:1.25fr .75fr;gap:13px;margin-top:14px}.dash-panel h3{margin:0 0 5px;font-size:17px}.chart-legend{display:flex;gap:14px;font-size:12px;color:#68758a;margin:12px 0}.legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:9px;align-items:end;height:150px;padding-top:10px}.bar-day{height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:6px;min-width:0}.bar-pair{height:116px;width:100%;display:flex;align-items:end;justify-content:center;gap:4px}.bar{width:min(15px,38%);min-height:3px;border-radius:6px 6px 2px 2px}.bar.in{background:linear-gradient(180deg,#38c98b,#139b6b)}.bar.out{background:linear-gradient(180deg,#ffab8c,#ee745e)}.bar-day small{font-size:10px;color:#8290a4;white-space:nowrap}.mini-summary{display:grid;gap:12px;margin-top:15px}.mini-line{display:flex;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid #eef1f6;font-size:13px}.mini-line strong{font-size:14px;color:#1e3456}
+.recent-list{display:grid;gap:0}.recent-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #eef1f6}.recent-item:last-child{border:0}.recent-left{display:flex;align-items:center;gap:10px;min-width:0}.recent-symbol{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#e9f8ef;color:#128353}.recent-symbol.out{background:#fff0ed;color:#d65c49}.recent-name{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.recent-meta{font-size:11px;color:#8a96a8;margin-top:3px}.recent-amount{font-weight:800;white-space:nowrap;font-size:13px}.brand-footer{text-align:center;color:#98a3b4;font-size:11px;padding:22px 0 8px}
+@media(max-width:750px){.grid{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr}table{font-size:13px}.wrap{padding:10px}nav button{flex:1 1 auto;min-width:105px}.dash-columns{grid-template-columns:1fr}.quick-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.card{padding:14px}.dash-welcome{padding:19px 16px;border-radius:19px}.dash-welcome h2{font-size:21px}.dash-today strong{font-size:21px}.grid{gap:9px}.stat-card{min-height:108px;padding:13px}.stat-card .num{font-size:20px}.stat-icon{width:32px;height:32px}.quick-grid{gap:8px}.quick-action{padding:11px 9px;font-size:12px;gap:8px}.quick-action .qicon{width:33px;height:33px;font-size:16px}.bars{gap:4px}.bar-pair{gap:2px}}
 </style>
 </head>
 <body>
@@ -34,13 +43,30 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <br><span class="hint">🎙️ ভয়েসের জন্য Chrome/Edge-এ মাইক্রোফোন অনুমতি লাগতে পারে। কিছু ফোনে সরাসরি HTML ফাইল থেকে ভয়েস কাজ করে না—সেক্ষেত্রে লিখে কমান্ড ব্যবহার করুন।</span>
 </div>
 <section id="dash">
-<div class="grid">
-<div class="card">মোট আয়<div class="num" id="income">৳0</div></div>
-<div class="card">মোট খরচ<div class="num" id="expense">৳0</div></div>
-<div class="card">ব্যালেন্স<div class="num" id="balance">৳0</div></div>
-<div class="card">লেনদেন<div class="num" id="count">0</div></div>
+<div class="dash-welcome">
+ <div><div class="dash-eyebrow">আপনার ব্যবসা, এক নজরে</div><h2>স্বাগতম, Rana Hisab-এ 👋</h2><div class="dash-date" id="dashDate">আজকের হিসাব এক জায়গায় দেখুন</div></div>
+ <div class="dash-today"><span class="dash-eyebrow">আজকের বিক্রি</span><strong id="todaySales">৳০</strong></div>
 </div>
-<div class="card" style="margin-top:14px"><h3>সাম্প্রতিক লেনদেন</h3><div id="recent"></div></div>
+<div class="grid">
+ <div class="card stat-card income"><div class="stat-top"><span>মোট আয়</span><span class="stat-icon">↗</span></div><div class="num" id="income">৳0</div><div class="stat-foot">সব রেকর্ড করা আয়ের যোগফল</div></div>
+ <div class="card stat-card expense"><div class="stat-top"><span>মোট খরচ</span><span class="stat-icon">↘</span></div><div class="num" id="expense">৳0</div><div class="stat-foot">সব রেকর্ড করা খরচের যোগফল</div></div>
+ <div class="card stat-card balance"><div class="stat-top"><span>নিট ব্যালেন্স</span><span class="stat-icon">৳</span></div><div class="num" id="balance">৳0</div><div class="stat-foot">মোট আয় থেকে মোট খরচ বাদ</div></div>
+ <div class="card stat-card count"><div class="stat-top"><span>মোট লেনদেন</span><span class="stat-icon">▤</span></div><div class="num" id="count">0</div><div class="stat-foot">সংরক্ষিত হিসাবের সংখ্যা</div></div>
+</div>
+<div class="dash-section-title"><h3>⚡ দ্রুত কাজ</h3><span>এক ট্যাপেই শুরু করুন</span></div>
+<div class="quick-grid">
+ <div class="quick-action" onclick="show('add')"><span class="qicon">＋</span><span>নতুন হিসাব</span></div>
+ <div class="quick-action" onclick="show('pos')"><span class="qicon">🛒</span><span>POS বিক্রি</span></div>
+ <div class="quick-action" onclick="show('products')"><span class="qicon">📦</span><span>পণ্য যোগ</span></div>
+ <div class="quick-action" onclick="show('cmd')"><span class="qicon">🎙️</span><span>স্মার্ট কমান্ড</span></div>
+</div>
+<div class="dash-columns">
+ <div class="card dash-panel"><h3>বিক্রি ও খরচের প্রবণতা</h3><div class="small">গত ৭ দিনের হিসাব</div><div class="chart-legend"><span><i class="legend-dot" style="background:#159b6b"></i>আয়</span><span><i class="legend-dot" style="background:#ee745e"></i>খরচ</span></div><div class="bars" id="dashBars"></div></div>
+ <div class="card dash-panel"><h3>এই মাসের সারাংশ</h3><div class="small">চলতি মাসের হিসাব</div><div class="mini-summary" id="monthSummary"></div></div>
+</div>
+<div class="dash-section-title"><h3>সাম্প্রতিক লেনদেন</h3><span>সর্বশেষ ৫টি</span></div>
+<div class="card"><div class="recent-list" id="recent"></div></div>
+<div class="brand-footer">© স্বপ্নময় ইনক বিডি · স্বপ্নময় গ্রুপের মালিকানাধীন</div>
 </section>
 
 <section id="add" class="hidden">
@@ -275,13 +301,30 @@ function speak(){
   r.onresult=e=>{command.value=e.results[0][0].transcript;runCommand(true);}
   r.onerror=e=>{result.innerHTML='<p>⚠️ ভয়েস ইনপুট পাওয়া যায়নি। Chrome-এ Microphone Permission দিন। '+(e.error||'')+'</p>';}
 }
+function renderDashboard(){
+ const now=new Date(), todayKey=now.toLocaleDateString('en-CA'), monthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+ const dayTx=tx.filter(x=>new Date(x.date).toLocaleDateString('en-CA')===todayKey);
+ const todayIncome=dayTx.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount||0),0);
+ const ts=document.getElementById('todaySales');if(ts)ts.textContent=money(todayIncome);
+ const dd=document.getElementById('dashDate');if(dd)dd.textContent=now.toLocaleDateString('bn-BD',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+ const monthTx=tx.filter(x=>String(x.date||'').slice(0,7)===monthKey);
+ const mi=monthTx.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount||0),0);
+ const me=monthTx.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount||0),0);
+ const ms=document.getElementById('monthSummary');
+ if(ms)ms.innerHTML='<div class="mini-line"><span>মাসের মোট আয়</span><strong style="color:#128353">'+money(mi)+'</strong></div><div class="mini-line"><span>মাসের মোট খরচ</span><strong style="color:#d65c49">'+money(me)+'</strong></div><div class="mini-line"><span>নিট পার্থক্য</span><strong>'+money(mi-me)+'</strong></div><div class="mini-line"><span>এই মাসের লেনদেন</span><strong>'+monthTx.length.toLocaleString('bn-BD')+'টি</strong></div>';
+ const days=[];
+ for(let i=6;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i),key=d.toLocaleDateString('en-CA'),items=tx.filter(x=>new Date(x.date).toLocaleDateString('en-CA')===key);days.push({label:d.toLocaleDateString('bn-BD',{day:'numeric',month:'short'}),inc:items.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount||0),0),exp:items.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount||0),0)});}
+ const max=Math.max(1,...days.flatMap(d=>[d.inc,d.exp]));
+ const bars=document.getElementById('dashBars');
+ if(bars)bars.innerHTML=days.map(d=>'<div class="bar-day"><div class="bar-pair"><i class="bar in" title="আয় '+money(d.inc)+'" style="height:'+Math.max(3,d.inc/max*100)+'%"></i><i class="bar out" title="খরচ '+money(d.exp)+'" style="height:'+Math.max(3,d.exp/max*100)+'%"></i></div><small>'+d.label+'</small></div>').join('');
+}
 function render(){
  fillSelects(); renderProducts();
  let inc=tx.filter(x=>x.type==='income').reduce((s,x)=>s+x.amount,0), exp=tx.filter(x=>x.type==='expense').reduce((s,x)=>s+x.amount,0);
- income.textContent=money(inc);expense.textContent=money(exp);balance.textContent=money(inc-exp);count.textContent=tx.length;
+ income.textContent=money(inc);expense.textContent=money(exp);balance.textContent=money(inc-exp);count.textContent=tx.length; renderDashboard();
  let q=(search?.value||'').toLowerCase(), arr=tx.filter(x=>(x.party+' '+x.note).toLowerCase().includes(q));
  table.innerHTML=arr.length?'<table><tr><th>তারিখ</th><th>খাত</th><th>ধরন</th><th>টাকা</th><th></th></tr>'+arr.map(x=>`<tr><td>${new Date(x.date).toLocaleDateString('bn-BD')}</td><td>${esc(x.party||'—')}<br>${esc(x.product||'')}${x.qty?` — ${esc(x.qty)} ${esc(x.unit||'')}`:''}<br>${esc(x.note||'')}</td><td>${x.type==='income'?'আয়':'খরচ'}</td><td>${money(x.amount)}</td><td><button class="danger" onclick="del(${x.id})">মুছুন</button></td></tr>`).join('')+'</table>':'কোনো লেনদেন নেই';
- recent.innerHTML=tx.slice(0,7).map(x=>`<p>${x.type==='income'?'🟢':'🔴'} ${esc(x.party||x.note||'লেনদেন')} — <b>${money(x.amount)}</b></p>`).join('')||'এখনও কোনো হিসাব নেই';
+ recent.innerHTML=tx.slice(0,5).map(x=>`<div class="recent-item"><div class="recent-left"><span class="recent-symbol ${x.type==='expense'?'out':''}">${x.type==='income'?'↗':'↘'}</span><div style="min-width:0"><div class="recent-name">${esc(x.party||x.product||x.note||'লেনদেন')}</div><div class="recent-meta">${new Date(x.date).toLocaleDateString('bn-BD')} · ${x.type==='income'?'আয়':'খরচ'}</div></div></div><div class="recent-amount" style="color:${x.type==='income'?'#128353':'#d65c49'}">${x.type==='income'?'+':'−'}${money(x.amount)}</div></div>`).join('')||'<div class="small" style="padding:14px 0">এখনও কোনো হিসাব নেই। প্রথম লেনদেনটি যোগ করুন।</div>';
 }
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function del(id){if(confirm('এই হিসাব মুছবেন?')){tx=tx.filter(x=>x.id!==id);save()}}
