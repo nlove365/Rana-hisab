@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: rana-hisab-apk
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
