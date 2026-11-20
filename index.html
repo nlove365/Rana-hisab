@@ -37,7 +37,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <header><div class="wrap"><div style="display:flex;align-items:center;gap:12px"><img src="icon.jpg" alt="রানা হিসাব লোগো" width="58" height="58" style="display:block;flex:0 0 58px;border-radius:14px;background:#fff;padding:4px"><div><h1>রানা হিসাব</h1><div class="sub">সহজ বাংলা হিসাব • লিখে বা মুখে কমান্ড দিন</div></div></div></div></header>
 <div class="wrap">
 <nav>
-<button onclick="show('dash')">ড্যাশবোর্ড</button><button onclick="show('add')">দ্রুত হিসাব</button><button onclick="show('products')">পণ্য</button><button onclick="show('list')">লেনদেন</button><button onclick="show('cmd')">🎙️ স্মার্ট কমান্ড</button><button onclick="show('photo')">📷 ছবি</button><button onclick="show('pos')">🛒 POS</button><button onclick="show('reports')">📊 রিপোর্ট</button><button onclick="show('payments')">💳 পেমেন্ট</button><button onclick="show('sources')">💰 আয়ের উৎস</button><button onclick="show('holidays')">📅 ছুটি</button><button onclick="show('budget')">🔔 খরচ অ্যালার্ট</button><button onclick="backup()">ব্যাকআপ</button><button onclick="restore.click()">রিস্টোর</button>
+<button onclick="show('dash')">ড্যাশবোর্ড</button><button onclick="show('add')">দ্রুত হিসাব</button><button onclick="show('products')">পণ্য</button><button onclick="show('list')">লেনদেন</button><button onclick="show('cmd')">🎙️ স্মার্ট কমান্ড</button><button onclick="show('photo')">📷 ছবি</button><button onclick="show('pos')">🛒 POS</button><button onclick="show('reports')">📊 রিপোর্ট</button><button onclick="show('payments')">💳 পেমেন্ট</button><button onclick="show('sources')">💰 আয়ের উৎস</button><button onclick="show('holidays')">📅 ছুটি</button><button onclick="show('budget')">🔔 খরচ অ্যালার্ট</button><button onclick="show('searchhub')">🔎 সার্চ</button><button onclick="backup()">ব্যাকআপ</button><button onclick="restore.click()">রিস্টোর</button>
 </nav>
 <div class="card" style="margin-bottom:14px;background:#eef6ff">
 <b>শুরু করুন:</b> “নতুন হিসাব” থেকে আয়/খরচ যোগ করুন। “স্মার্ট কমান্ড”-এ লিখে কমান্ড চালানো যাবে।
@@ -132,6 +132,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <p><button class="primary" onclick="cartAdd()">কার্টে যোগ করুন</button></p><div id="cartView"></div><div class="row"><div><label>কাস্টমারের নাম</label><input id="posParty"></div><div><label>প্রাপ্ত টাকা (৳)</label><input id="posPaid" type="number" value="0"></div></div>
 <p><button class="primary" onclick="checkout()">বিক্রি সম্পন্ন / রসিদ</button></p><div id="receipt"></div></div></section>
 <section id="reports" class="hidden"><div class="card"><h2>📊 তারিখভিত্তিক রিপোর্ট</h2><div class="row"><div><label>শুরুর তারিখ</label><input id="reportFrom" type="date"></div><div><label>শেষ তারিখ</label><input id="reportTo" type="date"></div></div><p><button class="primary" onclick="makeReport()">রিপোর্ট দেখুন</button></p><div id="reportResult"></div></div></section>
+<section id="searchhub" class="hidden"><div class="card"><h2>🔎 রানা হিসাব সার্চ</h2><p class="hint">পণ্য, ক্রেতা, বিক্রেতা, লেনদেন, আয়ের উৎস ও ছুটির তথ্য এক জায়গা থেকে খুঁজুন।</p><div class="row"><div style="flex:1"><label>কী খুঁজছেন?</label><input id="globalSearchInput" placeholder="যেমন: চাল, করিম, ৫০০০ টাকা, কমিশন..." oninput="runGlobalSearch()"></div><div style="display:flex;align-items:end;gap:7px"><button class="primary" onclick="runGlobalSearch()">অ্যাপে খুঁজুন</button><button onclick="searchGoogle()">Google-এ খুঁজুন ↗</button></div></div><div id="globalSearchResults" aria-live="polite"><p class="hint">সার্চ বক্সে লিখে অ্যাপের তথ্য খুঁজুন, অথবা Google-এ ইন্টারনেট সার্চ করুন।</p></div></div></section>
 <section id="payments" class="hidden"><div class="card"><h2>💳 বাকি আদায় / পরিশোধ</h2><div class="row"><div><label>ব্যক্তি</label><input id="payParty" placeholder="কাস্টমার/সাপ্লায়ার"></div><div><label>টাকার পরিমাণ</label><input id="payAmount" type="number"></div></div><div class="row"><div><label>ধরন</label><select id="payType"><option value="receive">কাস্টমারের কাছ থেকে আদায়</option><option value="pay">সাপ্লায়ারকে পরিশোধ</option></select></div><div><label>বিবরণ</label><input id="payNote"></div></div><p><button class="primary" onclick="recordPayment()">পেমেন্ট সংরক্ষণ</button></p><div id="paymentHistory"></div></div></section>
 <section id="sources" class="hidden"><div class="card"><h2>💰 আয়ের উৎস ব্যবস্থাপনা</h2><div class="row"><div><label>নতুন আয়ের উৎস</label><input id="sourceName" placeholder="যেমন পণ্য বিক্রি, কমিশন, ভাড়া"></div><div style="display:flex;align-items:end"><button class="primary" onclick="addIncomeSource()">উৎস যোগ করুন</button></div></div><div id="sourceList"></div><h3>উৎসভিত্তিক আয়</h3><div class="row"><div><label>শুরুর তারিখ</label><input id="sourceFrom" type="date"></div><div><label>শেষ তারিখ</label><input id="sourceTo" type="date"></div></div><button onclick="renderSourceReport()">রিপোর্ট দেখুন</button><div id="sourceReport"></div></div></section>
 <section id="holidays" class="hidden"><div class="card"><h2>📅 ছুটি ও বিশেষ দিনের ক্যালেন্ডার</h2><p class="hint">সরকারি/ধর্মীয় ছুটি এবং ব্যবসার নিজস্ব বন্ধের দিন যোগ করুন। চলমান বছরের সরকারি প্রজ্ঞাপন অনুযায়ী তারিখ যাচাই করে নিন।</p><div class="row"><div><label>ছুটির নাম</label><input id="holidayName" placeholder="যেমন ঈদের ছুটি / দোকান বন্ধ"></div><div><label>তারিখ</label><input id="holidayDate" type="date"></div></div><button class="primary" onclick="addHoliday()">ছুটি যোগ করুন</button><div id="holidayList"></div></div></section>
@@ -220,7 +221,7 @@ function seedCatalog(showNotice=true){
 }
 const money=n=>'৳'+Number(n||0).toLocaleString('bn-BD');
 function save(){localStorage.setItem('hisabPro',JSON.stringify(tx));localStorage.setItem('hisabProducts',JSON.stringify(products));localStorage.setItem('ranaPayments',JSON.stringify(payments||[]));render();}
-function show(id){['dash','add','list','cmd','products','photo','pos','reports','payments','sources','holidays','budget'].forEach(x=>{const el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render();if(id==='sources')renderSources();if(id==='holidays')renderHolidays();if(id==='budget')loadBudgetForm()}
+function show(id){['dash','add','list','cmd','products','photo','pos','reports','payments','sources','holidays','budget','searchhub'].forEach(x=>{const el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render();if(id==='sources')renderSources();if(id==='holidays')renderHolidays();if(id==='budget')loadBudgetForm();if(id==='searchhub')document.getElementById('globalSearchInput')?.focus()}
 function fillSelects(){
   unit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
   punit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
@@ -443,6 +444,33 @@ function confirmCommand(){let d=window.pendingCommand;if(!d)return;addTx(d.type,
 function speak(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return alert('এই ব্রাউজারে ভয়েস ইনপুট নেই; লিখে কমান্ড দিন।');let r=new SR();r.lang='bn-BD';r.continuous=false;r.interimResults=false;r.onresult=e=>{command.value=e.results[0][0].transcript;runCommand()};r.onerror=e=>{result.innerHTML='<p>⚠️ ভয়েস ইনপুট পাওয়া যায়নি। মাইক্রোফোন অনুমতি ও ইন্টারনেট সংযোগ পরীক্ষা করুন। '+(e.error||'')+'</p>'};try{r.start();result.innerHTML='<p>🎙️ শুনছি... এখন হিসাবটি বলুন।</p>'}catch(e){alert('মাইক্রোফোন চালু করা যায়নি। অনুমতি পরীক্ষা করুন।')}}
 // পুরোনো পণ্যে ক্যাটাগরি যোগ এবং বাংলা প্রাথমিক পণ্যের তালিকা একবারে পূরণ।
 seedCatalog(false);
+
+
+// --- Unified in-app search + Google web search ---
+function runGlobalSearch(){
+ const input=document.getElementById('globalSearchInput'),out=document.getElementById('globalSearchResults');
+ if(!input||!out)return;
+ const q=input.value.trim().toLocaleLowerCase('bn-BD');
+ if(!q){out.innerHTML='<p class="hint">খোঁজার জন্য কোনো শব্দ লিখুন।</p>';return;}
+ const hit=(...v)=>v.filter(Boolean).join(' ').toLocaleLowerCase('bn-BD').includes(q);
+ const groups=[];
+ const txHits=activeTx().filter(x=>hit(x.party,x.note,x.product,x.type,x.source,x.amount,new Date(x.date).toLocaleDateString('bn-BD')));
+ const pHits=products.filter(x=>hit(x.name,x.category,x.unit));
+ const payHits=(typeof payments!=='undefined'?payments:[]).filter(x=>hit(x.party,x.note,x.type,x.amount));
+ const sourceHits=incomeSources.filter(x=>hit(x));
+ const holidayHits=businessHolidays.filter(x=>hit(x.name,x.date));
+ if(txHits.length)groups.push('<h3>লেনদেন ('+txHits.length+')</h3><table><tr><th>তারিখ</th><th>বিবরণ</th><th>ধরন</th><th>টাকা</th></tr>'+txHits.slice(0,40).map(x=>'<tr><td>'+new Date(x.date).toLocaleDateString('bn-BD')+'</td><td>'+esc(x.party||'—')+' '+esc(x.product||'')+' '+esc(x.note||'')+'</td><td>'+(x.type==='income'?'আয়':'খরচ')+'</td><td>'+money(x.amount)+'</td></tr>').join('')+'</table>');
+ if(pHits.length)groups.push('<h3>পণ্য ('+pHits.length+')</h3><ul>'+pHits.slice(0,40).map(x=>'<li>'+esc(x.name)+' — '+esc(x.category||'অন্যান্য')+' ('+esc(x.unit||'')+')</li>').join('')+'</ul>');
+ if(payHits.length)groups.push('<h3>পেমেন্ট ('+payHits.length+')</h3><ul>'+payHits.slice(0,30).map(x=>'<li>'+esc(x.party||'—')+' — '+money(x.amount)+' — '+esc(x.note||'')+'</li>').join('')+'</ul>');
+ if(sourceHits.length)groups.push('<h3>আয়ের উৎস</h3><ul>'+sourceHits.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>');
+ if(holidayHits.length)groups.push('<h3>নিজস্ব ছুটি</h3><ul>'+holidayHits.map(x=>'<li>'+esc(x.name)+' — '+esc(x.date)+'</li>').join('')+'</ul>');
+ out.innerHTML=groups.length?'<p class="ok">মোট '+(txHits.length+pHits.length+payHits.length+sourceHits.length+holidayHits.length)+'টি মিল পাওয়া গেছে।</p>'+groups.join(''):'<p>অ্যাপের সংরক্ষিত তথ্যে “'+esc(input.value.trim())+'” পাওয়া যায়নি। ইন্টারনেটে খুঁজতে Google বাটন চাপুন।</p>';
+}
+function searchGoogle(){
+ const q=document.getElementById('globalSearchInput')?.value.trim();
+ if(!q)return alert('Google-এ খোঁজার জন্য শব্দ লিখুন');
+ window.location.href='https://www.google.com/search?q='+encodeURIComponent(q);
+}
 
 // --- Income sources, holiday calendar and expense alerts ---
 let incomeSources=JSON.parse(localStorage.getItem('ranaIncomeSources')||'null')||['পণ্য বিক্রি','সার্ভিস চার্জ','কমিশন','ভাড়া','অন্যান্য আয়'];
