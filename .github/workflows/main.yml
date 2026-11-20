@@ -58,6 +58,15 @@ jobs:
           cd "$PROJECT_DIR"
           gradle --no-daemon assembleDebug
 
+      - name: Verify APK contains latest brand assets
+        run: |
+          APK=$(find extracted/Rana-Hisab-Android/app/build/outputs/apk/debug -name '*.apk' -type f | head -n 1)
+          test -n "$APK"
+          unzip -p "$APK" assets/index.html | grep -q "স্বপ্নময় ইনক বিডি"
+          unzip -p "$APK" assets/index.html | grep -q 'alt="রানা হিসাব লোগো"'
+          unzip -l "$APK" | grep -q 'assets/icon.svg'
+          echo "Verified latest HTML, copyright and app logo are packaged in APK."
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
