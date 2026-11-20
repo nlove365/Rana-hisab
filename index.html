@@ -355,7 +355,7 @@ async function readPhoto(e){
    const sc=document.createElement('script');
    sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
    document.head.appendChild(sc);
-   await new Promise((resolve,reject)=>{sc.onload=resolve;sc.onerror=reject}).catch(()=>{throw new Error('OCR library load failed')});
+   try{await new Promise((resolve,reject)=>{sc.onload=resolve;sc.onerror=reject});}catch(err){status.textContent='⚠️ OCR চালু করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।';return;}
  }
  try{
    const {data:{text}}=await Tesseract.recognize(f,'eng+ben',{logger:m=>{
@@ -434,7 +434,7 @@ function restoreData(e){let f=e.target.files[0];if(!f)return;let r=new FileReade
 // Command parser always previews and waits for confirmation before saving.
 function runCommand(){let s=command.value.trim();if(!s)return alert('কমান্ড লিখুন');let d=extractCommand(s);if(!d.amount)return result.innerHTML='<p>টাকার পরিমাণ বুঝতে পারিনি।</p>';result.innerHTML=`<div class="card"><b>সংরক্ষণের আগে যাচাই করুন</b><p>ধরন: ${d.type==='income'?'আয়/বিক্রয়':'খরচ/ক্রয়'}</p><p>টাকা: ${money(d.amount)}</p><p>ব্যক্তি: ${esc(d.party||'উল্লেখ নেই')}</p><p>পরিমাণ: ${esc(d.qty||'—')} ${esc(d.unit||'')}</p><p>বিবরণ: ${esc(d.note)}</p><button class="primary" onclick="confirmCommand()">ঠিক আছে, সংরক্ষণ করুন</button> <button onclick="result.innerHTML='কমান্ড বাতিল হয়েছে'">বাতিল</button></div>`;window.pendingCommand=d}
 function confirmCommand(){let d=window.pendingCommand;if(!d)return;addTx(d.type,d.amount,d.party,d.note,'',d.qty,d.unit);window.pendingCommand=null;result.innerHTML='<p class="ok">হিসাব সংরক্ষণ হয়েছে।</p>';command.value=''}
-function speak(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return alert('এই ব্রাউজারে ভয়েস ইনপুট নেই; লিখে কমান্ড দিন।');let r=new SR();r.lang='bn-BD';r.onresult=e=>{command.value=e.results[0][0].transcript;runCommand()};r.onerror=()=>alert('মাইক্রোফোন অনুমতি পরীক্ষা করুন');r.start()}
+function speak(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return alert('এই ব্রাউজারে ভয়েস ইনপুট নেই; লিখে কমান্ড দিন।');let r=new SR();r.lang='bn-BD';r.continuous=false;r.interimResults=false;r.onresult=e=>{command.value=e.results[0][0].transcript;runCommand()};r.onerror=e=>{result.innerHTML='<p>⚠️ ভয়েস ইনপুট পাওয়া যায়নি। মাইক্রোফোন অনুমতি ও ইন্টারনেট সংযোগ পরীক্ষা করুন। '+(e.error||'')+'</p>'};try{r.start();result.innerHTML='<p>🎙️ শুনছি... এখন হিসাবটি বলুন।</p>'}catch(e){alert('মাইক্রোফোন চালু করা যায়নি। অনুমতি পরীক্ষা করুন।')}}
 // পুরোনো পণ্যে ক্যাটাগরি যোগ এবং বাংলা প্রাথমিক পণ্যের তালিকা একবারে পূরণ।
 seedCatalog(false);
 // Initialize payment history and render upgraded views.
