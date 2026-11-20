@@ -37,7 +37,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <header><div class="wrap"><div style="display:flex;align-items:center;gap:12px"><img src="icon.jpg" alt="রানা হিসাব লোগো" width="58" height="58" style="display:block;flex:0 0 58px;border-radius:14px;background:#fff;padding:4px"><div><h1>রানা হিসাব</h1><div class="sub">সহজ বাংলা হিসাব • লিখে বা মুখে কমান্ড দিন</div></div></div></div></header>
 <div class="wrap">
 <nav>
-<button onclick="show('dash')">ড্যাশবোর্ড</button><button onclick="show('add')">দ্রুত হিসাব</button><button onclick="show('products')">পণ্য</button><button onclick="show('list')">লেনদেন</button><button onclick="show('cmd')">🎙️ স্মার্ট কমান্ড</button><button onclick="show('photo')">📷 ছবি</button><button onclick="show('pos')">🛒 POS</button><button onclick="show('reports')">📊 রিপোর্ট</button><button onclick="show('payments')">💳 পেমেন্ট</button><button onclick="backup()">ব্যাকআপ</button><button onclick="restore.click()">রিস্টোর</button>
+<button onclick="show('dash')">ড্যাশবোর্ড</button><button onclick="show('add')">দ্রুত হিসাব</button><button onclick="show('products')">পণ্য</button><button onclick="show('list')">লেনদেন</button><button onclick="show('cmd')">🎙️ স্মার্ট কমান্ড</button><button onclick="show('photo')">📷 ছবি</button><button onclick="show('pos')">🛒 POS</button><button onclick="show('reports')">📊 রিপোর্ট</button><button onclick="show('payments')">💳 পেমেন্ট</button><button onclick="show('sources')">💰 আয়ের উৎস</button><button onclick="show('holidays')">📅 ছুটি</button><button onclick="show('budget')">🔔 খরচ অ্যালার্ট</button><button onclick="backup()">ব্যাকআপ</button><button onclick="restore.click()">রিস্টোর</button>
 </nav>
 <div class="card" style="margin-bottom:14px;background:#eef6ff">
 <b>শুরু করুন:</b> “নতুন হিসাব” থেকে আয়/খরচ যোগ করুন। “স্মার্ট কমান্ড”-এ লিখে কমান্ড চালানো যাবে।
@@ -88,6 +88,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <div><label>ব্যক্তি/কাস্টমার/সাপ্লায়ার</label><input id="party" placeholder="যেমন করিম"></div>
 <div><label>বিবরণ</label><input id="note" placeholder="যেমন ২ কেজি চাল বিক্রি"></div>
 </div>
+<div><label>আয়ের উৎস (আয়ের ক্ষেত্রে)</label><select id="incomeSource"></select></div>
 <div class="actions">
 <button class="primary" onclick="addTx()">💾 হিসাব সংরক্ষণ</button>
 <button onclick="clearForm()">🧹 ফর্ম পরিষ্কার</button>
@@ -131,6 +132,9 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <p><button class="primary" onclick="checkout()">বিক্রি সম্পন্ন / রসিদ</button></p><div id="receipt"></div></div></section>
 <section id="reports" class="hidden"><div class="card"><h2>📊 তারিখভিত্তিক রিপোর্ট</h2><div class="row"><div><label>শুরুর তারিখ</label><input id="reportFrom" type="date"></div><div><label>শেষ তারিখ</label><input id="reportTo" type="date"></div></div><p><button class="primary" onclick="makeReport()">রিপোর্ট দেখুন</button></p><div id="reportResult"></div></div></section>
 <section id="payments" class="hidden"><div class="card"><h2>💳 বাকি আদায় / পরিশোধ</h2><div class="row"><div><label>ব্যক্তি</label><input id="payParty" placeholder="কাস্টমার/সাপ্লায়ার"></div><div><label>টাকার পরিমাণ</label><input id="payAmount" type="number"></div></div><div class="row"><div><label>ধরন</label><select id="payType"><option value="receive">কাস্টমারের কাছ থেকে আদায়</option><option value="pay">সাপ্লায়ারকে পরিশোধ</option></select></div><div><label>বিবরণ</label><input id="payNote"></div></div><p><button class="primary" onclick="recordPayment()">পেমেন্ট সংরক্ষণ</button></p><div id="paymentHistory"></div></div></section>
+<section id="sources" class="hidden"><div class="card"><h2>💰 আয়ের উৎস ব্যবস্থাপনা</h2><div class="row"><div><label>নতুন আয়ের উৎস</label><input id="sourceName" placeholder="যেমন পণ্য বিক্রি, কমিশন, ভাড়া"></div><div style="display:flex;align-items:end"><button class="primary" onclick="addIncomeSource()">উৎস যোগ করুন</button></div></div><div id="sourceList"></div><h3>উৎসভিত্তিক আয়</h3><div class="row"><div><label>শুরুর তারিখ</label><input id="sourceFrom" type="date"></div><div><label>শেষ তারিখ</label><input id="sourceTo" type="date"></div></div><button onclick="renderSourceReport()">রিপোর্ট দেখুন</button><div id="sourceReport"></div></div></section>
+<section id="holidays" class="hidden"><div class="card"><h2>📅 ছুটি ও বিশেষ দিনের ক্যালেন্ডার</h2><p class="hint">সরকারি/ধর্মীয় ছুটি এবং ব্যবসার নিজস্ব বন্ধের দিন যোগ করুন। চলমান বছরের সরকারি প্রজ্ঞাপন অনুযায়ী তারিখ যাচাই করে নিন।</p><div class="row"><div><label>ছুটির নাম</label><input id="holidayName" placeholder="যেমন ঈদের ছুটি / দোকান বন্ধ"></div><div><label>তারিখ</label><input id="holidayDate" type="date"></div></div><button class="primary" onclick="addHoliday()">ছুটি যোগ করুন</button><div id="holidayList"></div></div></section>
+<section id="budget" class="hidden"><div class="card"><h2>🔔 খরচের সীমা ও অ্যালার্ট</h2><div class="row"><div><label>দৈনিক খরচের সীমা (৳)</label><input id="dailyLimit" type="number" min="0" placeholder="যেমন ৫০০০"></div><div><label>মাসিক খরচের সীমা (৳)</label><input id="monthlyLimit" type="number" min="0" placeholder="যেমন ১০০০০০"></div></div><button class="primary" onclick="saveBudget()">সীমা সংরক্ষণ</button><div id="budgetStatus"></div><p class="hint">৮০% হলে সতর্কবার্তা, ১০০% ছাড়ালে জরুরি অ্যালার্ট। শব্দ/কম্পন ডিভাইস ও ব্রাউজারের অনুমতির ওপর নির্ভরশীল।</p></div></section>
 <input id="restore" type="file" accept=".json" hidden onchange="restoreData(event)">
 </div>
 <script>
@@ -215,7 +219,7 @@ function seedCatalog(showNotice=true){
 }
 const money=n=>'৳'+Number(n||0).toLocaleString('bn-BD');
 function save(){localStorage.setItem('hisabPro',JSON.stringify(tx));localStorage.setItem('hisabProducts',JSON.stringify(products));localStorage.setItem('ranaPayments',JSON.stringify(payments||[]));render();}
-function show(id){['dash','add','list','cmd','products','photo','pos','reports','payments'].forEach(x=>{const el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render()}
+function show(id){['dash','add','list','cmd','products','photo','pos','reports','payments','sources','holidays','budget'].forEach(x=>{const el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render();if(id==='sources')renderSources();if(id==='holidays')renderHolidays();if(id==='budget')loadBudgetForm()}
 function fillSelects(){
   unit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
   punit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
@@ -400,7 +404,7 @@ function addTx(t=null,a=null,p='',n='',prod='',q='',u=''){
  if(!u)u=document.getElementById('unit').value;
  let qtyVal=q||document.getElementById('qty').value;
  if(prodName&&!products.some(x=>x.name.toLowerCase()===prodName.toLowerCase()))products.push({name:prodName,unit:u||'টি',category:'অন্যান্য'});
- tx.unshift({id:Date.now(),date:new Date().toISOString(),type,amount,party:p||document.getElementById('party').value,product:prodName,qty:qtyVal,unit:u,note:n||document.getElementById('note').value,voided:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+ tx.unshift({id:Date.now(),date:new Date().toISOString(),type,amount,party:p||document.getElementById('party').value,product:prodName,qty:qtyVal,unit:u,note:n||document.getElementById('note').value,source:type==='income'?(document.getElementById('incomeSource')?.value||'অন্যান্য আয়'):'',voided:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
  save();clearForm();show('add');
 }
 function del(id){let x=tx.find(t=>t.id===id);if(!x)return;if(confirm('এন্ট্রি স্থায়ীভাবে মুছবেন না; বাতিল (Void) হিসেবে চিহ্নিত হবে। চালিয়ে যাবেন?')){x.voided=true;x.voidedAt=new Date().toISOString();save()}}
@@ -438,8 +442,28 @@ function confirmCommand(){let d=window.pendingCommand;if(!d)return;addTx(d.type,
 function speak(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return alert('এই ব্রাউজারে ভয়েস ইনপুট নেই; লিখে কমান্ড দিন।');let r=new SR();r.lang='bn-BD';r.continuous=false;r.interimResults=false;r.onresult=e=>{command.value=e.results[0][0].transcript;runCommand()};r.onerror=e=>{result.innerHTML='<p>⚠️ ভয়েস ইনপুট পাওয়া যায়নি। মাইক্রোফোন অনুমতি ও ইন্টারনেট সংযোগ পরীক্ষা করুন। '+(e.error||'')+'</p>'};try{r.start();result.innerHTML='<p>🎙️ শুনছি... এখন হিসাবটি বলুন।</p>'}catch(e){alert('মাইক্রোফোন চালু করা যায়নি। অনুমতি পরীক্ষা করুন।')}}
 // পুরোনো পণ্যে ক্যাটাগরি যোগ এবং বাংলা প্রাথমিক পণ্যের তালিকা একবারে পূরণ।
 seedCatalog(false);
+
+// --- Income sources, holiday calendar and expense alerts ---
+let incomeSources=JSON.parse(localStorage.getItem('ranaIncomeSources')||'null')||['পণ্য বিক্রি','সার্ভিস চার্জ','কমিশন','ভাড়া','অন্যান্য আয়'];
+let businessHolidays=JSON.parse(localStorage.getItem('ranaHolidays')||'[]');
+let expenseBudget=JSON.parse(localStorage.getItem('ranaExpenseBudget')||'{"daily":0,"monthly":0}');
+const fixedHolidays=[['আন্তর্জাতিক মাতৃভাষা দিবস','02-21'],['স্বাধীনতা ও জাতীয় দিবস','03-26'],['বাংলা নববর্ষ','04-14'],['মে দিবস','05-01'],['বিজয় দিবস','12-16'],['বড়দিন','12-25']];
+function addIncomeSource(){const n=document.getElementById('sourceName').value.trim();if(!n)return alert('উৎসের নাম লিখুন');if(incomeSources.some(x=>x.toLowerCase()===n.toLowerCase()))return alert('এই উৎস আগে থেকেই আছে');incomeSources.push(n);localStorage.setItem('ranaIncomeSources',JSON.stringify(incomeSources));document.getElementById('sourceName').value='';renderSources();fillIncomeSourceSelect();}
+function fillIncomeSourceSelect(){const el=document.getElementById('incomeSource');if(el){const v=el.value;el.innerHTML=incomeSources.map(x=>'<option>'+esc(x)+'</option>').join('');if(incomeSources.includes(v))el.value=v;}}
+function renderSources(){fillIncomeSourceSelect();const el=document.getElementById('sourceList');if(el)el.innerHTML='<ul>'+incomeSources.map((x,i)=>'<li>'+esc(x)+' <button onclick="removeIncomeSource('+i+')">বাদ দিন</button></li>').join('')+'</ul>';}
+function removeIncomeSource(i){if(incomeSources.length<2)return alert('অন্তত একটি উৎস রাখুন');if(!confirm('উৎসটি তালিকা থেকে বাদ দেবেন? পুরোনো লেনদেনের তথ্য থাকবে।'))return;incomeSources.splice(i,1);localStorage.setItem('ranaIncomeSources',JSON.stringify(incomeSources));renderSources();}
+function renderSourceReport(){const f=document.getElementById('sourceFrom').value,t=document.getElementById('sourceTo').value;const rows=activeTx().filter(x=>x.type==='income'&&(!f||x.date.slice(0,10)>=f)&&(!t||x.date.slice(0,10)<=t));const sums={};rows.forEach(x=>{const k=x.source||'অন্যান্য আয়';sums[k]=(sums[k]||0)+Number(x.amount||0)});document.getElementById('sourceReport').innerHTML=Object.keys(sums).length?'<table><tr><th>আয়ের উৎস</th><th>মোট আয়</th></tr>'+Object.entries(sums).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<tr><td>'+esc(k)+'</td><td>'+money(v)+'</td></tr>').join('')+'</table>':'এই সময়ে উৎসভিত্তিক আয় নেই।';}
+function addHoliday(){const n=document.getElementById('holidayName').value.trim(),d=document.getElementById('holidayDate').value;if(!n||!d)return alert('ছুটির নাম ও তারিখ দিন');businessHolidays.push({id:Date.now(),name:n,date:d});localStorage.setItem('ranaHolidays',JSON.stringify(businessHolidays));document.getElementById('holidayName').value='';renderHolidays();}
+function renderHolidays(){const today=new Date();today.setHours(0,0,0,0);const yr=today.getFullYear();let list=businessHolidays.map(x=>({...x,kind:'নিজস্ব/যোগ করা'}));fixedHolidays.forEach(([name,md])=>list.push({name,date:yr+'-'+md,kind:'জাতীয়/বিশেষ দিবস'}));list.push({name:'সাপ্তাহিক ছুটি (শুক্রবার)',date:'',kind:'প্রতি শুক্রবার'});list=list.filter(x=>!x.date||new Date(x.date+'T00:00:00')>=today).sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999'));const el=document.getElementById('holidayList');if(el)el.innerHTML='<table><tr><th>দিন/ছুটি</th><th>তারিখ</th><th>ধরন</th><th></th></tr>'+list.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+(x.date?new Date(x.date+'T00:00:00').toLocaleDateString('bn-BD'):'সাপ্তাহিক')+'</td><td>'+x.kind+'</td><td>'+(x.id?'<button onclick="deleteHoliday('+x.id+')">মুছুন</button>':'')+'</td></tr>').join('')+'</table><p class="hint">আসন্ন ছুটির আগে প্রস্তুতি নিন: পর্যাপ্ত নগদ, প্রয়োজনীয় স্টক ও সরবরাহ পরিকল্পনা করুন। শুক্রবারকে সাপ্তাহিক ছুটি হিসেবে দেখানো হয়েছে।</p>';}
+function deleteHoliday(id){businessHolidays=businessHolidays.filter(x=>x.id!==id);localStorage.setItem('ranaHolidays',JSON.stringify(businessHolidays));renderHolidays();}
+function loadBudgetForm(){document.getElementById('dailyLimit').value=expenseBudget.daily||'';document.getElementById('monthlyLimit').value=expenseBudget.monthly||'';renderBudgetStatus();}
+function saveBudget(){const d=Number(document.getElementById('dailyLimit').value||0),m=Number(document.getElementById('monthlyLimit').value||0);if(!Number.isFinite(d)||!Number.isFinite(m)||d<0||m<0)return alert('সঠিক সীমা লিখুন');expenseBudget={daily:d,monthly:m};localStorage.setItem('ranaExpenseBudget',JSON.stringify(expenseBudget));renderBudgetStatus();}
+function renderBudgetStatus(){const now=new Date(),key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0'),month=key.slice(0,7),live=activeTx(),today=live.filter(x=>x.type==='expense'&&x.date.slice(0,10)===key).reduce((a,x)=>a+Number(x.amount||0),0),monthly=live.filter(x=>x.type==='expense'&&x.date.slice(0,7)===month).reduce((a,x)=>a+Number(x.amount||0),0);const lines=[['আজকের খরচ',today,expenseBudget.daily,'daily'],['মাসের খরচ',monthly,expenseBudget.monthly,'monthly']];const html=lines.map(([name,spent,limit])=>{const pct=limit?spent/limit*100:0;return '<div class="mini-line"><span>'+name+' — '+money(spent)+(limit?' / সীমা '+money(limit):' / সীমা নির্ধারণ হয়নি')+'</span><strong style="color:'+(limit&&pct>=100?'#b42318':limit&&pct>=80?'#b7791f':'#128353')+'">'+(limit?Math.round(pct)+'%':'—')+'</strong></div>'}).join('');const el=document.getElementById('budgetStatus');if(el)el.innerHTML=html;lines.forEach(([name,spent,limit,period])=>{if(!limit)return;const pct=spent/limit*100,level=pct>=100?'100':pct>=80?'80':'';if(!level)return;const stamp=key+'-'+period+'-'+level;if(localStorage.getItem('ranaBudgetAlert-'+stamp))return;localStorage.setItem('ranaBudgetAlert-'+stamp,'1');const msg='খরচের সতর্কতা: '+name+' '+Math.round(pct)+'% হয়েছে। '+money(spent)+' / '+money(limit);setTimeout(()=>{alert(msg);if(pct>=100&&navigator.vibrate)navigator.vibrate([250,100,250]);},150);});}
+
 // Initialize payment history and render upgraded views.
+fillIncomeSourceSelect();
 render();
+renderBudgetStatus();
 
 </script>
 <script>
