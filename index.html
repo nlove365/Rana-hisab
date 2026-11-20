@@ -148,17 +148,29 @@ function parseBanglaNumber(s){
   return Number(String(s||'').replace(/[০-৯]/g,d=>'০১২৩৪৫৬৭৮৯'.indexOf(d)).replace(/[^\d.]/g,''));
 }
 function extractCommand(s){
-  const nums=s.match(/[০-৯0-9][০-৯0-9,.]*/g)||[];
-  const amount=nums.length?parseBanglaNumber(nums[nums.length-1]):0;
-  const qty=nums.length>1?parseBanglaNumber(nums[0]):'';
-  const expense=/খরচ|ব্যয়|ব্যয়|দিলাম|দিয়েছি|কিনলাম|কেনা|ক্রয়/.test(s);
-  const income=/পেলাম|পেয়েছি|আয়|বিক্রি|জমা|বিক্রয়/.test(s);
+  const raw=String(s||'').trim();
+  const nums=raw.match(/[০-৯0-9]+(?:[,.][০-৯0-9]+)*/g)||[];
+  const toNum=v=>Number(String(v||'').replace(/[০-৯]/g,d=>'০১২৩৪৫৬৭৮৯'.indexOf(d)).replace(/,/g,''));
+  const unitMatch=units.find(x=>raw.includes(x))||'';
+  const qty=(unitMatch && nums.length>1)?toNum(nums[0]):'';
+  const amount=nums.length?toNum(nums[nums.length-1]):0;
+  const expense=/খরচ|ব্যয়|ব্যয়|দিলাম|দিয়েছি|দিয়েছি|কিনলাম|কেনা|ক্রয়|ক্রয়|পরিশোধ/.test(raw);
+  const income=/পেলাম|পেয়েছি|পেয়েছি|আয়|আয়|বিক্রি|জমা|বিক্রয়|বিক্রয়|গ্রহণ/.test(raw);
   const type=expense?'expense':income?'income':'income';
-  const unitMatch=units.find(x=>s.includes(x));
-  let partyMatch=s.match(/(?:থেকে|কাছ থেকে|কে|কে দিলাম|কে পেলাম)\s*([^\s,০-৯0-9]+)/);
-  let party=partyMatch?partyMatch[1]:'';
-  let cleaned=s.replace(/[০-৯0-9][০-৯0-9,.]*/g,'').replace(/টাকা/g,'').replace(/থেকে/g,'').trim();
-  return {type,amount,qty,unit:unitMatch||'টি',party,note:cleaned};
+  let party='';
+  let m=raw.match(/(.+?)\s+(?:এর\s+)?কাছ\s+থেকে\s*[০-৯0-9]/);
+  if(m) party=m[1].replace(/^(আজ|গতকাল|গত\s+দিন)\s*/,'').trim();
+  if(!party){
+    m=raw.match(/(.+?)কে\s*(?:[০-৯0-9]|টাকা|দিলাম|দিয়েছি|দিয়েছি)/);
+    if(m) party=m[1].replace(/^(আজ|গতকাল)\s*/,'').trim();
+  }
+  let cleaned=raw
+    .replace(/[০-৯0-9]+(?:[,.][০-৯0-9]+)*/g,' ')
+    .replace(/টাকা|৳/g,' ')
+    .replace(/আজ|গতকাল|থেকে|কাছ|এর|পেলাম|পেয়েছি|পেয়েছি|দিলাম|দিয়েছি|দিয়েছি|খরচ|ব্যয়|ব্যয়|আয়|আয়|বিক্রি|জমা|কিনলাম|কেনা|ক্রয়|ক্রয়|পরিশোধ/g,' ')
+    .replace(/\s+/g,' ').trim();
+  if(party) cleaned=cleaned.replace(party,'').trim();
+  return {type,amount,qty,unit:unitMatch||'টি',party,note:cleaned||raw};
 }
 function runCommand(auto=false){
   let s=command.value.trim();
