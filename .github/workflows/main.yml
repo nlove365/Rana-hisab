@@ -109,7 +109,12 @@ jobs:
           unzip -l "$APK" | grep -q 'assets/icon.svg'
           unzip -l "$APK" | grep -q 'res/drawable/ic_launcher.xml'
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -q 'application-icon'
-          echo "Verified HTML, copyright, app logo and Android launcher icon in APK."
+          unzip -p "$APK" assets/index.html | grep -Fq "localStorage.setItem('ranaPayments'"
+          unzip -p "$APK" assets/index.html | grep -Fq "dateKey=d=>"
+          unzip -p "$APK" assets/index.html | grep -Fq "ছাড় সাবটোটালের"
+          unzip -p "$APK" assets/index.html | grep -Fq "function confirmCommand()"
+          unzip -p "$APK" assets/sw.js | grep -Fq "rana-hisab-v4"
+          echo "Verified branding, dashboard, payment persistence, POS validation, smart command and PWA cache in APK."
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
