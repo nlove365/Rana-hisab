@@ -214,7 +214,7 @@ function seedCatalog(showNotice=true){
 }
 const money=n=>'৳'+Number(n||0).toLocaleString('bn-BD');
 function save(){localStorage.setItem('hisabPro',JSON.stringify(tx));localStorage.setItem('hisabProducts',JSON.stringify(products));render();}
-function show(id){['dash','add','list','cmd','products','photo'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id));render()}
+function show(id){['dash','add','list','cmd','products','photo','pos','reports','payments'].forEach(x=>{const el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render()}
 function fillSelects(){
   unit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
   punit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
