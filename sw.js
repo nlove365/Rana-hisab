@@ -1,4 +1,4 @@
-const CACHE = 'rana-hisab-v4';
+const CACHE = 'rana-hisab-v5-rana-search-1';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './sw.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)));
