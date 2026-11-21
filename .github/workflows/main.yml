@@ -133,6 +133,14 @@ jobs:
                   "inventory stock tracking": "function adjustStock()" in html and "stockTracked" in html,
                   "POS aggregate stock validation": "কার্টসহ পর্যাপ্ত স্টক নেই" in html and "requested[key]>available" in html,
                   "POS stock deduction": "p.stock=Number(p.stock)-requested[key]" in html,
+                  "stock ledger persistence": "localStorage.setItem('ranaStockMovements'" in html,
+                  "unit conversion": "function convertStockQty(q,from,to)" in html,
+                  "manual transaction stock movement": "manual-'+type" in html,
+                  "POS stock movement ledger": "source:'pos-sale'" in html,
+                  "void stock reversal": "source:'void-reversal'" in html and "m.reversed=true" in html,
+                  "stock history UI": 'id="stockHistory"' in html and "function renderStockHistory()" in html,
+                  "backup stock ledger": "stockMovements:stockMovements" in html,
+                  "restore stock ledger": "stockMovements=Array.isArray(d.stockMovements)" in html,
                   "POS credit sale ledger": "type:'creditSale',note:'POS বাকি বিক্রি'" in html,
                   "barcode product registration": 'id="pBarcode"' in html and "barcode" in html,
                   "POS barcode lookup": "function lookupPosBarcode()" in html,
@@ -149,7 +157,7 @@ jobs:
               print("PASS: bundled app logo")
               sw_path = find_asset("sw.js")
               sw = z.read(sw_path).decode("utf-8", "replace")
-              if "rana-hisab-v9-low-stock-alerts-1" not in sw:
+              if "rana-hisab-v10-stock-ledger-1" not in sw:
                   raise SystemExit("APK verification failed: service worker cache version is outdated")
               print("PASS: service worker cache version")
           PY
