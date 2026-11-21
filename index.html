@@ -661,6 +661,7 @@ addTx=function(t=null,a=null,p='',n='',prod='',q='',u=''){
  const qtyVal=q||document.getElementById('qty').value;
  let trackedProduct=prodName?products.find(x=>String(x.name).toLowerCase()===String(prodName).toLowerCase()):null;
  if(prodName&&!trackedProduct){trackedProduct={name:prodName,unit:u||'টি',category:'অন্যান্য',stock:0,stockTracked:false};products.push(trackedProduct);}
+ if(trackedProduct&&type==='expense'&&qtyVal!==''&&qtyVal!==null)trackedProduct.stockTracked=true;
  let stockDelta=0,convertedQty=null;
  if(trackedProduct&&trackedProduct.stockTracked){
   convertedQty=convertStockQty(qtyVal,u||trackedProduct.unit,trackedProduct.unit);
