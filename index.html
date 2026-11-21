@@ -911,7 +911,7 @@ renderRanaTasks();checkRanaTaskReminders();setInterval(checkRanaTaskReminders,60
   el.dataset.ranaNumericReady='1';
   el.addEventListener('input',function(){
    const start=this.selectionStart,old=this.value;
-   if(/[০-৯]/.test(old))window.ranaNumberLocale='bn-BD';else if(/[0-9]/.test(old))window.ranaNumberLocale='en-US';
+   if(window.ranaNumberMode==='bn-BD')window.ranaNumberLocale='bn-BD';else if(window.ranaNumberMode==='en-US')window.ranaNumberLocale='en-US';else if(/[০-৯]/.test(old))window.ranaNumberLocale='bn-BD';else if(/[0-9]/.test(old))window.ranaNumberLocale='en-US';
    const next=window.ranaNormalizeNumberInput(old);
    if(next!==old){this.value=next;try{const pos=Math.max(0,(start??old.length)-(old.length-next.length));this.setSelectionRange(pos,pos);}catch(e){}}
   });
