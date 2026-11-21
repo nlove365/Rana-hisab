@@ -230,7 +230,7 @@ function seedCatalog(showNotice=true){
 }
 const money=n=>'৳'+Number(n||0).toLocaleString('bn-BD');
 function save(){localStorage.setItem('hisabPro',JSON.stringify(tx));localStorage.setItem('hisabProducts',JSON.stringify(products));localStorage.setItem('ranaPayments',JSON.stringify(payments||[]));render();}
-function show(id){['dash','add','list','cmd','products','photo','pos','reports','payments','sources','holidays','budget','searchhub','help'].forEach(x=>{const el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render();if(id==='sources')renderSources();if(id==='holidays')renderHolidays();if(id==='budget')loadBudgetForm();if(id==='searchhub')document.getElementById('globalSearchInput')?.focus()}
+function show(id){['dash','add','list','cmd','products','photo','pos','returns','reports','payments','sources','holidays','budget','searchhub','help','tasks','contacts'].forEach(x=>{const el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render();if(id==='sources')renderSources();if(id==='holidays')renderHolidays();if(id==='budget')loadBudgetForm();if(id==='searchhub')document.getElementById('globalSearchInput')?.focus();if(id==='contacts')renderContacts();if(id==='tasks'&&typeof renderRanaTasks==='function')renderRanaTasks();if(id==='returns'&&typeof renderReturns==='function')renderReturns();}
 function fillSelects(){
   unit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
   punit.innerHTML=units.map(u=>`<option>${u}</option>`).join('');
@@ -362,7 +362,7 @@ function speak(){
  if(!('webkitSpeechRecognition'in window||'SpeechRecognition'in window)){alert('এই ব্রাউজারে ভয়েস ইনপুট নেই। Chrome ব্যবহার করুন।');return}
  let R=window.SpeechRecognition||window.webkitSpeechRecognition,r=new R();r.lang='bn-BD';r.start();r.onresult=e=>{command.value=e.results[0][0].transcript};r.onerror=()=>alert('মাইক্রোফোন ব্যবহার করা যায়নি। অনুমতি দিন।')
 }
-function backup(){let b=new Blob([JSON.stringify({transactions:tx,products:products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='rana-hisab-backup.json';a.click()}
+function backup(){try{const payload={schemaVersion:2,exportedAt:new Date().toISOString(),transactions:tx,products:products,payments:payments,stockMovements:stockMovements,costLayers:ranaCostLayers,tasks:ranaTasks,incomeSources:incomeSources,holidays:businessHolidays,expenseBudget:expenseBudget,contacts:ranaContacts};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='rana-hisab-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);alert('ব্যাকআপ ফাইল তৈরি হয়েছে। ফোনের Downloads/নির্বাচিত ফোল্ডারে সংরক্ষণ নিশ্চিত করুন।')}catch(err){alert('ব্যাকআপ তৈরি করা যায়নি: '+(err.message||err))}}
 function restoreData(e){
  let f=e.target.files[0];if(!f)return;
  let r=new FileReader();
