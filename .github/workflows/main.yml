@@ -156,6 +156,7 @@ jobs:
                   "POS void payment exclusion": "payments.filter(p=>!p.voided" in html and "p.voided=true" in html,
                   "POS discount-linked void": "String(t.posForTxId)===String(x.id)" in html and "if(x.posForTxId){const parentSale=tx.find" in html,
                   "discount-adjusted margin": "Number(x.amount)||0)-(Number(x.discountShare)||0)" in html,
+                  "party-wise balances": "const outstandingByParty=(saleType,settleType)=>" in html and "outstandingByParty('creditSale','receive')" in html,
                   "in-app update prompt": "ranaUpdateNotice" in html and "controllerchange" in html,
               }
               for label, ok in checks.items():
