@@ -107,6 +107,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <div class="row"><div><label>ডিফল্ট একক</label><select id="punit"></select></div>
 <div><label>ক্যাটাগরি অনুযায়ী দেখুন</label><select id="productCategoryFilter" onchange="renderProducts()"><option value="">সব ক্যাটাগরি</option></select></div></div>
 <div class="row"><div><label>ক্রয়মূল্য (৳/একক)</label><input id="pBuyPrice" type="number" min="0" step="any" placeholder="ঐচ্ছিক"></div><div><label>বিক্রয়মূল্য (৳/একক)</label><input id="pSellPrice" type="number" min="0" step="any" placeholder="ঐচ্ছিক"></div></div>
+<div><label>বারকোড নম্বর (ঐচ্ছিক)</label><input id="pBarcode" inputmode="numeric" placeholder="বারকোড স্ক্যান বা নম্বর লিখুন"></div>
 <p><button class="primary" onclick="addProduct()">➕ পণ্য যোগ করুন</button> <button onclick="seedCatalog()">📚 সম্পূর্ণ পণ্যের তালিকা যুক্ত করুন</button></p>
 <div class="card" style="margin-top:12px"><h3>📥 স্টক যোগ / প্রারম্ভিক স্টক</h3><div class="row"><div><label>পণ্য</label><select id="stockProduct"></select></div><div><label>পরিমাণ যোগ করুন</label><input id="stockQty" type="number" min="0.0001" step="any" placeholder="যেমন ১০"></div></div><p><button onclick="adjustStock()">স্টক সংরক্ষণ</button></p><small>প্রথমবার এখানে বর্তমান মজুত লিখে দিন। এরপর POS বিক্রিতে স্টক স্বয়ংক্রিয়ভাবে কমবে।</small></div>
 <div class="hint">প্রতিটি পণ্যের ক্যাটাগরি ও একক নির্বাচন করুন। নতুন পণ্যও নিজের মতো যোগ করতে পারবেন।</div>
@@ -129,6 +130,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 </div></section>
 
 <section id="pos" class="hidden"><div class="card"><h2>🛒 POS কুইক কার্ট</h2>
+<div class="card" style="margin-bottom:10px"><label>বারকোড স্ক্যান করে পণ্য খুঁজুন</label><div class="row"><div style="flex:1"><input id="posBarcode" placeholder="বারকোড স্ক্যানার দিয়ে স্ক্যান করুন" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupPosBarcode()}"></div><div><button type="button" onclick="lookupPosBarcode()">খুঁজুন</button> <button type="button" onclick="startBarcodeCamera()">📷 ক্যামেরা</button></div></div><small>USB/Bluetooth স্ক্যানার বা ক্যামেরা ব্যবহার করুন। স্ক্যান শেষে Enter চাপুন।</small><div id="barcodeStatus" class="small"></div><div id="barcodeCamera" style="display:none"><video id="barcodeVideo" playsinline muted style="width:100%;max-height:240px;background:#111;border-radius:10px"></video><button type="button" onclick="stopBarcodeCamera()">স্ক্যান বন্ধ</button></div></div>
 <div class="row"><div><label>পণ্য</label><select id="posProduct"></select></div><div><label>পরিমাণ</label><input id="posQty" type="number" step="any" value="1"></div></div>
 <div class="row"><div><label>একক মূল্য (৳)</label><input id="posPrice" type="number" step="any" placeholder="প্রতি এককের দাম"></div><div><label>ডিসকাউন্ট (৳)</label><input id="posDiscount" type="number" step="any" value="0"></div></div>
 <p><button class="primary" onclick="cartAdd()">কার্টে যোগ করুন</button></p><div id="cartView"></div><div class="row"><div><label>কাস্টমারের নাম</label><input id="posParty"></div><div><label>প্রাপ্ত টাকা (৳)</label><input id="posPaid" type="number" value="0"></div></div>
@@ -241,14 +243,15 @@ function clearForm(){
   amount.value=''; party.value=''; note.value=''; qty.value=''; newproduct.value=''; product.value='';
 }
 function addProduct(){
-  const n=pname.value.trim(), u=punit.value||'টি', category=pcategory.value||'অন্যান্য';
+  const n=pname.value.trim(), u=punit.value||'টি', category=pcategory.value||'অন্যান্য', barcode=(document.getElementById('pBarcode')?.value||'').trim();
   if(!n)return alert('পণ্যের নাম দিন');
   if(products.some(p=>p.name.toLowerCase()===n.toLowerCase()))return alert('এই পণ্য আগে থেকেই আছে');
-  products.push({name:n,unit:u,category,buyPrice:Number(document.getElementById('pBuyPrice').value||0),sellPrice:Number(document.getElementById('pSellPrice').value||0),stock:0,stockTracked:false}); save(); pname.value='';document.getElementById('pBuyPrice').value='';document.getElementById('pSellPrice').value=''; renderProducts(); fillSelects();
+  if(barcode&&products.some(p=>String(p.barcode||'').trim()===barcode))return alert('এই বারকোড অন্য পণ্যে ব্যবহার হয়েছে');
+  products.push({name:n,unit:u,category,barcode,buyPrice:Number(document.getElementById('pBuyPrice').value||0),sellPrice:Number(document.getElementById('pSellPrice').value||0),stock:0,stockTracked:false}); save(); pname.value='';document.getElementById('pBarcode').value='';document.getElementById('pBuyPrice').value='';document.getElementById('pSellPrice').value=''; renderProducts(); fillSelects();
 }
 function renderProducts(){
-  productTable.innerHTML=products.length?'<table><tr><th>পণ্য</th><th>একক</th><th>ক্রয়/বিক্রয়</th><th>মজুত</th><th></th></tr>'+
-  products.map((p,i)=>`<tr><td>${esc(p.name)}<br><small>${esc(p.category||'অন্যান্য')}</small></td><td>${esc(p.unit)}</td><td>${money(p.buyPrice||0)} / ${money(p.sellPrice||0)}</td><td>${p.stockTracked?Number(p.stock||0).toLocaleString('bn-BD')+' '+esc(p.unit):'স্টক সেট হয়নি'}</td><td><button class="danger" onclick="deleteProduct(${i})">মুছুন</button></td></tr>`).join('')+'</table>':'এখনও কোনো পণ্য যোগ করা হয়নি।';
+  productTable.innerHTML=products.length?'<table><tr><th>পণ্য / বারকোড</th><th>একক</th><th>ক্রয়/বিক্রয়</th><th>মজুত</th><th></th></tr>'+
+  products.map((p,i)=>`<tr><td>${esc(p.name)}<br><small>${esc(p.category||'অন্যান্য')} · ${esc(p.barcode||'বারকোড নেই')}</small></td><td>${esc(p.unit)}</td><td>${money(p.buyPrice||0)} / ${money(p.sellPrice||0)}</td><td>${p.stockTracked?Number(p.stock||0).toLocaleString('bn-BD')+' '+esc(p.unit):'স্টক সেট হয়নি'}</td><td><button class="danger" onclick="deleteProduct(${i})">মুছুন</button></td></tr>`).join('')+'</table>':'এখনও কোনো পণ্য যোগ করা হয়নি।';
 }
 function adjustStock(){var i=Number(document.getElementById('stockProduct').value),q=Number(document.getElementById('stockQty').value),p=products[i];if(!p||!Number.isFinite(q)||q<=0)return alert('পণ্য ও সঠিক পরিমাণ দিন');p.stock=Number(p.stock||0)+q;p.stockTracked=true;save();document.getElementById('stockQty').value='';renderProducts();fillSelects();alert('স্টক সংরক্ষণ হয়েছে');}
 function deleteProduct(i){if(confirm('পণ্যটি তালিকা থেকে মুছবেন?')){products.splice(i,1);save();renderProducts();fillSelects();}}
@@ -401,7 +404,7 @@ const oldSave=save;
 save=function(){localStorage.setItem('hisabPro',JSON.stringify(tx));localStorage.setItem('hisabProducts',JSON.stringify(products));localStorage.setItem('ranaPayments',JSON.stringify(payments));render();};
 let payments=JSON.parse(localStorage.getItem('ranaPayments')||'[]');
 const oldShow=show;
-show=function(id){['dash','add','list','cmd','products','photo','pos','reports','payments','sources','holidays','budget','searchhub'].forEach(x=>{let el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render();if(id==='pos')fillPos();if(id==='payments')renderPayments();if(id==='sources')renderSources();if(id==='holidays')renderHolidays();if(id==='budget')loadBudgetForm();if(id==='searchhub'){let q=document.getElementById('globalSearchInput');if(q)q.focus();runGlobalSearch();}};
+show=function(id){if(id!=='pos'&&typeof stopBarcodeCamera==='function')stopBarcodeCamera();['dash','add','list','cmd','products','photo','pos','reports','payments','sources','holidays','budget','searchhub'].forEach(x=>{let el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render();if(id==='pos')fillPos();if(id==='payments')renderPayments();if(id==='sources')renderSources();if(id==='holidays')renderHolidays();if(id==='budget')loadBudgetForm();if(id==='searchhub'){let q=document.getElementById('globalSearchInput');if(q)q.focus();runGlobalSearch();}};
 function unitBase(q,u){q=Number(q||0);if(u==='গ্রাম')return q/1000;if(u==='মিলিলিটার')return q/1000;if(u==='কেজি'||u==='লিটার')return q;return q;}
 function stockFor(name){let p=products.find(x=>x.name===name);if(p&&p.stockTracked)return Number(p.stock||0);return activeTx().reduce((n,x)=>{if(x.product!==name)return n;let q=unitBase(x.qty,x.unit);return n+(x.type==='expense'?q:-q)},0)}
 function addTx(t=null,a=null,p='',n='',prod='',q='',u=''){
@@ -420,6 +423,35 @@ function editTx(id){let x=tx.find(t=>t.id===id);if(!x||x.voided)return;let v=pro
 function showAudit(id){let x=tx.find(t=>t.id===id);if(!x)return;let h=Array.isArray(x.auditLog)?x.auditLog:[];alert(h.length?'সংশোধনের ইতিহাস:\\n'+h.map((v,i)=>(i+1)+'. '+new Date(v.changedAt).toLocaleString('bn-BD')+'\\nআগের টাকা: '+money(v.previous?.amount)+'\\nআগের বিবরণ: '+(v.previous?.note||'—')).join('\\n\\n'):'এই লেনদেনে কোনো সংশোধনের ইতিহাস নেই।')}
 function renderProducts(){let el=document.getElementById('productTable');if(!el)return;let filter=document.getElementById('productCategoryFilter')?.value||'';let list=products.map((p,i)=>({p,i})).filter(x=>!filter||(x.p.category||'অন্যান্য')===filter);el.innerHTML=list.length?'<table><tr><th>ক্যাটাগরি</th><th>পণ্য</th><th>একক</th><th>বর্তমান স্টক</th><th></th></tr>'+list.map(({p,i})=>`<tr><td>${esc(p.category||'অন্যান্য')}</td><td>${esc(p.name)}</td><td>${esc(p.unit)}</td><td>${stockFor(p.name).toLocaleString('bn-BD')}</td><td><button class="danger" onclick="deleteProduct(${i})">মুছুন</button></td></tr>`).join('')+'</table>':'এই ক্যাটাগরিতে পণ্য নেই।'}
 function render(){fillSelects();renderProducts();let live=activeTx();let inc=live.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount),0),exp=live.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount),0);income.textContent=money(inc);expense.textContent=money(exp);balance.textContent=money(inc-exp);count.textContent=live.length;renderDashboard();renderBudgetStatus();let q=(document.getElementById('search')?.value||'').toLowerCase(),arr=tx.filter(x=>(x.party+' '+x.note+' '+x.product).toLowerCase().includes(q));let t=document.getElementById('table');if(t)t.innerHTML=arr.length?'<table><tr><th>তারিখ</th><th>খাত</th><th>ধরন</th><th>টাকা</th><th>অ্যাকশন</th></tr>'+arr.map(x=>`<tr style="opacity:${x.voided?'.5':'1'}"><td>${new Date(x.date).toLocaleDateString('bn-BD')}</td><td>${esc(x.party||'—')}<br>${esc(x.product||'')}${x.qty?` — ${esc(x.qty)} ${esc(x.unit||'')}`:''}<br>${esc(x.note||'')}</td><td>${x.voided?'বাতিল':x.type==='income'?'আয়':'খরচ'}</td><td>${money(x.amount)}</td><td>${x.voided?'—':`<button onclick="editTx(${x.id})">এডিট</button> <button onclick="showAudit(${x.id})">ইতিহাস</button> <button class="danger" onclick="del(${x.id})">Void</button>`}</td></tr>`).join('')+'</table>':'কোনো লেনদেন নেই';let r=document.getElementById('recent');if(r)r.innerHTML=live.slice(0,7).map(x=>`<p>${x.type==='income'?'🟢':'🔴'} ${esc(x.party||x.note||'লেনদেন')} — <b>${money(x.amount)}</b></p>`).join('')||'এখনও কোনো হিসাব নেই';}
+function lookupPosBarcode(){
+ const input=document.getElementById('posBarcode'),code=(input?.value||'').trim(),status=document.getElementById('barcodeStatus');
+ if(!code)return alert('বারকোড স্ক্যান বা নম্বর লিখুন');
+ const i=products.findIndex(p=>String(p.barcode||'').trim()===code);
+ if(i<0){if(status)status.textContent='এই বারকোডের পণ্য পাওয়া যায়নি। পণ্যের তালিকায় বারকোড যুক্ত করুন।';return;}
+ const select=document.getElementById('posProduct');if(select){select.value=String(i);const p=products[i];document.getElementById('posPrice').value=Number(p.sellPrice||0);document.getElementById('posQty').focus();}
+ if(status)status.textContent='পাওয়া গেছে: '+products[i].name;
+ if(input){input.value='';}
+}
+let barcodeStream=null,barcodeTimer=null,barcodeDetector=null,barcodeBusy=false;
+async function startBarcodeCamera(){
+ const panel=document.getElementById('barcodeCamera'),video=document.getElementById('barcodeVideo'),status=document.getElementById('barcodeStatus');
+ if(!('BarcodeDetector' in window)){if(status)status.textContent='এই ব্রাউজারে ক্যামেরা বারকোড শনাক্তকরণ নেই। USB/Bluetooth স্ক্যানার বা নম্বর লিখুন।';return;}
+ if(!navigator.mediaDevices?.getUserMedia){if(status)status.textContent='ক্যামেরা ব্যবহারের অনুমতি বা সমর্থন নেই।';return;}
+ try{
+  barcodeDetector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','qr_code']});
+  barcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+  video.srcObject=barcodeStream;panel.style.display='block';await video.play();
+  if(status)status.textContent='বারকোড ক্যামেরার সামনে ধরুন…';
+  const scan=async()=>{if(!barcodeStream||barcodeBusy)return;barcodeBusy=true;try{const codes=await barcodeDetector.detect(video);if(codes.length){document.getElementById('posBarcode').value=codes[0].rawValue;stopBarcodeCamera();lookupPosBarcode();}}catch(e){}finally{barcodeBusy=false;}if(barcodeStream)barcodeTimer=setTimeout(scan,250);};
+  scan();
+ }catch(e){stopBarcodeCamera();if(status)status.textContent='ক্যামেরা চালু হয়নি। অনুমতি দিন অথবা স্ক্যানার/ম্যানুয়াল নম্বর ব্যবহার করুন।';}
+}
+function stopBarcodeCamera(){
+ if(barcodeTimer){clearTimeout(barcodeTimer);barcodeTimer=null;}
+ if(barcodeStream){barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null;}
+ const v=document.getElementById('barcodeVideo');if(v)v.srcObject=null;
+ const p=document.getElementById('barcodeCamera');if(p)p.style.display='none';
+}
 function fillPos(){let el=document.getElementById('posProduct');if(el)el.innerHTML=products.map((p,i)=>`<option value="${i}">${esc(p.name)} — ${esc(p.category||'অন্যান্য')} (${esc(p.unit)}) — স্টক ${stockFor(p.name).toLocaleString('bn-BD')}</option>`).join('')||'<option>আগে পণ্য যোগ করুন</option>';renderCart()}
 function cartAdd(){let i=Number(posProduct.value),p=products[i],q=Number(posQty.value),price=Number(posPrice.value||p?.sellPrice||0);if(p&&(!posPrice.value||Number(posPrice.value)===0)&&p.sellPrice)posPrice.value=p.sellPrice;if(!p||!Number.isFinite(q)||q<=0||!Number.isFinite(price)||price<0)return alert('পণ্য, পরিমাণ ও মূল্য সঠিক দিন');if(p.stockTracked){let already=cart.filter(x=>x.productIndex===i).reduce((n,x)=>n+Number(x.qty||0),0);if(already+q>Number(p.stock||0))return alert('কার্টসহ পর্যাপ্ত স্টক নেই। বর্তমান মজুত: '+Number(p.stock||0)+' '+p.unit);}cart.push({productIndex:i,name:p.name,unit:p.unit,qty:q,price,total:q*price});renderCart()}
 function renderCart(){let el=document.getElementById('cartView');if(!el)return;let sum=cart.reduce((a,x)=>a+x.total,0),discount=Number(document.getElementById('posDiscount')?.value||0);el.innerHTML=cart.length?'<table><tr><th>পণ্য</th><th>পরিমাণ</th><th>মোট</th></tr>'+cart.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.qty} ${esc(x.unit)}</td><td>${money(x.total)}</td></tr>`).join('')+`</table><b>সাবটোটাল: ${money(sum)} | ছাড়: ${money(discount)} | মোট: ${money(Math.max(0,sum-discount))}</b>`:'কার্ট খালি';}
