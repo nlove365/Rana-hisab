@@ -893,4 +893,66 @@ renderRanaTasks();checkRanaTaskReminders();setInterval(checkRanaTaskReminders,60
 })();
 </script>
 
+
+<script>
+/* POS barcode camera support; hardware scanner input remains available as fallback. */
+let ranaBarcodeStream=null,ranaBarcodeFrame=0,ranaBarcodeDetector=null;
+function lookupPosBarcode(){
+ const input=document.getElementById('posBarcode'),status=document.getElementById('barcodeStatus');
+ const code=String(input?.value||'').trim();
+ if(!code){if(status)status.textContent='বারকোড নম্বর লিখুন বা স্ক্যান করুন।';return false;}
+ const index=products.findIndex(p=>String(p.barcode||'').trim()===code);
+ if(index<0){if(status)status.textContent='এই বারকোডের পণ্য পাওয়া যায়নি। পণ্যের তথ্য থেকে বারকোড যোগ করুন।';return false;}
+ const selector=document.getElementById('posProduct');
+ if(selector){selector.value=String(index);selector.dispatchEvent(new Event('change',{bubbles:true}));}
+ const p=products[index],price=document.getElementById('posPrice');
+ if(price&&Number(p.sellPrice)>0)price.value=Number(p.sellPrice);
+ if(status)status.textContent='পণ্য পাওয়া গেছে: '+p.name+' ('+p.unit+'). পরিমাণ যাচাই করে কার্টে যোগ করুন।';
+ document.getElementById('posQty')?.focus();
+ return true;
+}
+function stopBarcodeCamera(){
+ if(ranaBarcodeFrame)cancelAnimationFrame(ranaBarcodeFrame);
+ ranaBarcodeFrame=0;
+ if(ranaBarcodeStream){ranaBarcodeStream.getTracks().forEach(track=>track.stop());ranaBarcodeStream=null;}
+ const video=document.getElementById('barcodeVideo');
+ if(video){video.pause();video.srcObject=null;}
+ const panel=document.getElementById('barcodeCamera');if(panel)panel.style.display='none';
+}
+async function startBarcodeCamera(){
+ const status=document.getElementById('barcodeStatus'),panel=document.getElementById('barcodeCamera'),video=document.getElementById('barcodeVideo');
+ if(!navigator.mediaDevices?.getUserMedia){if(status)status.textContent='এই পরিবেশে ক্যামেরা চালু করা যাচ্ছে না। HTTPS Chrome বা ফোনের স্ক্যানার ব্যবহার করুন।';return;}
+ if(typeof BarcodeDetector==='undefined'){if(status)status.textContent='এই Android WebView-তে ক্যামেরা বারকোড API নেই। USB/Bluetooth স্ক্যানার দিয়ে বারকোড ঘরে স্ক্যান করে Enter চাপুন।';return;}
+ try{
+  stopBarcodeCamera();
+  const supported=await BarcodeDetector.getSupportedFormats();
+  const preferred=['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','qr_code'];
+  const formats=preferred.filter(x=>supported.includes(x));
+  if(!formats.length)throw new Error('এই ডিভাইসে সমর্থিত বারকোড ফরম্যাট পাওয়া যায়নি।');
+  ranaBarcodeDetector=new BarcodeDetector({formats});
+  ranaBarcodeStream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+  video.srcObject=ranaBarcodeStream;panel.style.display='block';await video.play();
+  if(status)status.textContent='বারকোডটি ক্যামেরার ফ্রেমে ধরুন।';
+  const scan=async()=>{
+   if(!ranaBarcodeStream)return;
+   try{
+    if(video.readyState>=2){
+     const hits=await ranaBarcodeDetector.detect(video);
+     if(hits.length){
+      const value=String(hits[0].rawValue||'').trim();
+      if(value){document.getElementById('posBarcode').value=value;stopBarcodeCamera();lookupPosBarcode();return;}
+     }
+    }
+   }catch(error){if(status)status.textContent='স্ক্যান করা যাচ্ছে না—আলো ও ক্যামেরার অবস্থান ঠিক করুন।';}
+   if(ranaBarcodeStream)ranaBarcodeFrame=requestAnimationFrame(scan);
+  };
+  ranaBarcodeFrame=requestAnimationFrame(scan);
+ }catch(error){
+  stopBarcodeCamera();
+  if(status)status.textContent='ক্যামেরা চালু হয়নি: '+String(error?.message||error)+'। চাইলে USB/Bluetooth স্ক্যানার ব্যবহার করুন।';
+ }
+}
+window.addEventListener('pagehide',stopBarcodeCamera);
+</script>
+
 </body></html>
