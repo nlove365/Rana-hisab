@@ -112,7 +112,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <p><button class="primary" onclick="addProduct()">➕ পণ্য যোগ করুন</button> <button onclick="seedCatalog()">📚 সম্পূর্ণ পণ্যের তালিকা যুক্ত করুন</button></p>
 <div class="card" style="margin-top:12px"><h3>📥 স্টক যোগ / প্রারম্ভিক স্টক</h3><div class="row"><div><label>পণ্য</label><select id="stockProduct"></select></div><div><label>পরিমাণ যোগ করুন</label><input id="stockQty" type="number" min="0.0001" step="any" placeholder="যেমন ১০"></div></div><p><button onclick="adjustStock()">স্টক সংরক্ষণ</button></p><small>প্রথমবার এখানে বর্তমান মজুত লিখে দিন। এরপর POS বিক্রিতে স্টক স্বয়ংক্রিয়ভাবে কমবে।</small></div>
 <div class="hint">প্রতিটি পণ্যের ক্যাটাগরি ও একক নির্বাচন করুন। নতুন পণ্যও নিজের মতো যোগ করতে পারবেন।</div>
-<div id="productTable"></div>
+<div id="productTable"></div><div class="card" style="margin-top:12px"><h3>📜 স্টক পরিবর্তনের ইতিহাস</h3><div id="stockHistory"></div></div>
 </div></section>
 
 <section id="list" class="hidden"><div class="card"><h2>সব লেনদেন</h2><input id="search" oninput="render()" placeholder="নাম বা বিবরণ দিয়ে খুঁজুন"><div id="table"></div></div></section>
@@ -609,4 +609,170 @@ var baseRenderContacts=renderContacts;renderContacts=function(){baseRenderContac
 function renderContactLedger(){var box=document.getElementById('contactList');if(!box)return;var active=ranaContacts.filter(function(c){return c.active!==false;});var ledger=active.map(function(c){var nm=(c.name||'').trim().toLocaleLowerCase('bn-BD'),entries=activeTx().filter(function(t){return (t.party||'').trim().toLocaleLowerCase('bn-BD')===nm;}).map(function(t){return {date:t.date,type:t.type==='income'?'আয়':'খরচ',amount:Number(t.amount||0),note:t.note||t.product||'লেনদেন',source:'transaction'};}).concat(payments.filter(function(p){return (p.party||'').trim().toLocaleLowerCase('bn-BD')===nm;}).map(function(p){return {date:p.date,type:p.type==='receive'?'বাকি আদায়':p.type==='pay'?'বাকি পরিশোধ':p.type==='creditSale'?'বাকি বিক্রি':p.type==='creditPurchase'?'বাকি ক্রয়':'পেমেন্ট',amount:Number(p.amount||0),note:p.note||'পেমেন্ট',source:'payment'};}));if(!entries.length)return '';entries.sort(function(a,b){return new Date(b.date)-new Date(a.date);});var totalIncome=entries.filter(function(e){return e.type==='আয়';}).reduce(function(a,e){return a+e.amount;},0),totalExpense=entries.filter(function(e){return e.type==='খরচ';}).reduce(function(a,e){return a+e.amount;},0),totalReceive=entries.filter(function(e){return e.type==='বাকি আদায়';}).reduce(function(a,e){return a+e.amount;},0),totalPay=entries.filter(function(e){return e.type==='বাকি পরিশোধ';}).reduce(function(a,e){return a+e.amount;},0),creditSales=entries.filter(function(e){return e.type==='বাকি বিক্রি';}).reduce(function(a,e){return a+e.amount;},0),creditPurchases=entries.filter(function(e){return e.type==='বাকি ক্রয়';}).reduce(function(a,e){return a+e.amount;},0),receivable=Math.max(0,creditSales-totalReceive),payable=Math.max(0,creditPurchases-totalPay),customerAdvance=Math.max(0,totalReceive-creditSales),supplierAdvance=Math.max(0,totalPay-creditPurchases);return '<div class="card" style="margin-top:10px"><h3>'+esc(c.name)+' — বিস্তারিত খতিয়ান</h3><p>নগদ আয়: '+money(totalIncome)+' · নগদ ব্যয়: '+money(totalExpense)+'</p><p>বাকি বিক্রি: '+money(creditSales)+' · আদায়: '+money(totalReceive)+' · <strong>পাওনা: '+money(receivable)+'</strong></p><p>বাকি ক্রয়: '+money(creditPurchases)+' · পরিশোধ: '+money(totalPay)+' · <strong>দেনা: '+money(payable)+'</strong></p>'+(customerAdvance?'<p>অগ্রিম আদায়: '+money(customerAdvance)+'</p>':'')+(supplierAdvance?'<p>অগ্রিম পরিশোধ: '+money(supplierAdvance)+'</p>':'')+'<div style="overflow:auto"><table><tr><th>তারিখ</th><th>ধরন</th><th>বিবরণ</th><th>টাকা</th></tr>'+entries.slice(0,100).map(function(e){return '<tr><td>'+new Date(e.date).toLocaleDateString('bn-BD')+'</td><td>'+esc(e.type)+'</td><td>'+esc(e.note)+'</td><td>'+money(e.amount)+'</td></tr>';}).join('')+'</table></div><small>এই খতিয়ান লেনদেন ও পেমেন্টের তালিকা; বাকি/দেনা-পাওয়ার চূড়ান্ত হিসাব আলাদা যাচাই প্রয়োজন।</small></div>';}).filter(Boolean).join('');var panel=document.getElementById('contactLedgerPanel');if(!panel){panel=document.createElement('div');panel.id='contactLedgerPanel';box.parentNode.insertBefore(panel,box.nextSibling);}panel.innerHTML=ledger?'<h3>ব্যক্তিভিত্তিক বিস্তারিত খতিয়ান</h3>'+ledger:'';}
 var priorGlobalSearch=runGlobalSearch;runGlobalSearch=function(){priorGlobalSearch();var input=document.getElementById('globalSearchInput'),out=document.getElementById('globalSearchResults');if(!input||!out||!input.value.trim())return;var q=input.value.trim().toLocaleLowerCase('bn-BD');var hits=ranaContacts.filter(function(c){return c.active!==false&&[c.name,c.phone,c.address,c.note,c.type].filter(Boolean).join(' ').toLocaleLowerCase('bn-BD').includes(q);});if(hits.length){out.innerHTML+='<h3>পরিচিতি ('+hits.length+')</h3><ul>'+hits.slice(0,40).map(function(c){return '<li>'+esc(c.name)+' — '+esc(c.phone||'ফোন নেই')+' — '+esc(c.type||'')+'</li>';}).join('')+'</ul>';}};
 var oldShowForContacts=show;show=function(id){if(id==='contacts'){['dash','add','list','cmd','products','photo','pos','reports','payments','sources','holidays','budget','searchhub','help','contacts'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.toggle('hidden',k!==id);});renderContacts();return;}oldShowForContacts(id);};
+
+/* --- Auditable inventory ledger v1 --- */
+var stockMovements=JSON.parse(localStorage.getItem('ranaStockMovements')||'[]');
+if(!Array.isArray(stockMovements))stockMovements=[];
+function stockUnitFactor(unit){
+ const u=String(unit||'').trim();
+ if(u==='কেজি')return {kind:'weight',factor:1000};
+ if(u==='গ্রাম')return {kind:'weight',factor:1};
+ if(u==='লিটার')return {kind:'volume',factor:1000};
+ if(u==='মিলিলিটার')return {kind:'volume',factor:1};
+ return {kind:'exact:'+u,factor:1};
+}
+function convertStockQty(q,from,to){
+ q=Number(q);if(!Number.isFinite(q)||q<=0)return null;
+ const a=stockUnitFactor(from),b=stockUnitFactor(to);
+ if(a.kind!==b.kind)return null;
+ const result=q*a.factor/b.factor;
+ return Number.isFinite(result)&&result>0?result:null;
+}
+function appendStockMovement(product,qty,delta,source,txId){
+ const before=Number(product.stock||0),after=before+delta;
+ if(!Number.isFinite(after)||after < -1e-9)return false;
+ product.stock=Number(Math.max(0,after).toFixed(6));product.stockTracked=true;
+ stockMovements.push({id:'sm-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),txId:txId??null,product:product.name,unit:product.unit||'টি',qty:Number(qty),delta:Number(delta),before,after:product.stock,source,date:new Date().toISOString(),reversed:false});
+ return true;
+}
+function saveInventoryLedger(){
+ localStorage.setItem('ranaStockMovements',JSON.stringify(stockMovements));
+}
+save=function(){
+ localStorage.setItem('hisabPro',JSON.stringify(tx));
+ localStorage.setItem('hisabProducts',JSON.stringify(products));
+ localStorage.setItem('ranaPayments',JSON.stringify(payments||[]));
+ saveInventoryLedger();render();
+};
+adjustStock=function(){
+ const i=Number(document.getElementById('stockProduct').value),q=Number(document.getElementById('stockQty').value),p=products[i];
+ if(!p||!Number.isFinite(q)||q<=0)return alert('পণ্য ও সঠিক পরিমাণ দিন');
+ const before=Number(p.stock||0);
+ if(!appendStockMovement(p,q,q,'manual-adjustment',null))return alert('স্টক পরিবর্তন করা যায়নি');
+ save();document.getElementById('stockQty').value='';fillSelects();renderProducts();renderStockHistory();
+ alert('স্টক সংরক্ষণ হয়েছে এবং ইতিহাসে যোগ হয়েছে');
+};
+addTx=function(t=null,a=null,p='',n='',prod='',q='',u=''){
+ const type=t||document.getElementById('type').value,amount=Number(a??document.getElementById('amount').value);
+ if(!Number.isFinite(amount)||amount<=0)return alert('সঠিক টাকার পরিমাণ দিন');
+ let prodName=prod||document.getElementById('newproduct').value.trim();
+ if(!prodName&&product.value!==''){const pp=products[Number(product.value)];if(pp){prodName=pp.name;if(!u)u=pp.unit;}}
+ if(!u)u=document.getElementById('unit').value;
+ const qtyVal=q||document.getElementById('qty').value;
+ let trackedProduct=prodName?products.find(x=>String(x.name).toLowerCase()===String(prodName).toLowerCase()):null;
+ if(prodName&&!trackedProduct){trackedProduct={name:prodName,unit:u||'টি',category:'অন্যান্য',stock:0,stockTracked:false};products.push(trackedProduct);}
+ let stockDelta=0,convertedQty=null;
+ if(trackedProduct&&trackedProduct.stockTracked){
+  convertedQty=convertStockQty(qtyVal,u||trackedProduct.unit,trackedProduct.unit);
+  if(convertedQty===null)return alert('স্টক-ট্র্যাকিং পণ্যের সঠিক পরিমাণ ও সামঞ্জস্যপূর্ণ একক দিন।');
+  stockDelta=type==='expense'?convertedQty:-convertedQty;
+  if(Number(trackedProduct.stock||0)+stockDelta < -1e-9)return alert('পর্যাপ্ত স্টক নেই: '+trackedProduct.name+'। বর্তমান মজুত '+trackedProduct.stock+' '+trackedProduct.unit);
+ }
+ const now=new Date().toISOString(),id=Date.now()+Math.random();
+ const entry={id,date:now,type,amount,party:p||document.getElementById('party').value,product:prodName,qty:qtyVal,unit:u,note:n||document.getElementById('note').value,source:type==='income'?(document.getElementById('incomeSource')?.value||'অন্যান্য আয়'):'',voided:false,createdAt:now,updatedAt:now};
+ tx.unshift(entry);
+ if(trackedProduct&&trackedProduct.stockTracked){
+  appendStockMovement(trackedProduct,convertedQty,stockDelta,'manual-'+type,id);
+ }
+ save();clearForm();show('add');
+};
+del=function(id){
+ const x=tx.find(t=>String(t.id)===String(id));if(!x||x.voided)return;
+ const linked=stockMovements.filter(m=>String(m.txId)===String(x.id)&&!m.reversed);
+ for(const m of linked.slice().reverse()){
+  const p=products.find(v=>v.name===m.product);if(!p)return alert('স্টক ফেরত দেওয়া যায়নি: পণ্য তালিকায় নেই। লেনদেন বাতিল করা হয়নি।');
+  const reversal=-Number(m.delta),next=Number(p.stock||0)+reversal;
+  if(!Number.isFinite(next)||next < -1e-9)return alert('স্টক ফেরত দেওয়ার আগে মজুত যাচাই প্রয়োজন। লেনদেন বাতিল করা হয়নি।');
+ }
+ if(!confirm('লেনদেনটি বাতিল (Void) করবেন? সংশ্লিষ্ট স্টক মুভমেন্ট বিপরীতভাবে সমন্বয় হবে।'))return;
+ for(const m of linked.slice().reverse()){
+  const p=products.find(v=>v.name===m.product),before=Number(p.stock||0),delta=-Number(m.delta);
+  p.stock=Number(Math.max(0,before+delta).toFixed(6));
+  m.reversed=true;m.reversedAt=new Date().toISOString();
+  stockMovements.push({id:'sm-rev-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),txId:x.id,product:p.name,unit:m.unit,qty:m.qty,delta,before,after:p.stock,source:'void-reversal',date:new Date().toISOString(),reverses:m.id,reversed:false});
+ }
+ x.voided=true;x.voidedAt=new Date().toISOString();save();renderStockHistory();
+};
+checkout=function(){
+ if(!cart.length)return alert('কার্টে পণ্য যোগ করুন');
+ const subtotal=cart.reduce((a,x)=>a+Number(x.total||0),0),discount=Number(posDiscount.value||0);
+ if(!Number.isFinite(subtotal)||subtotal<0||!Number.isFinite(discount)||discount<0||discount>subtotal)return alert('ছাড় সাবটোটালের চেয়ে বেশি বা ঋণাত্মক হতে পারে না');
+ const total=subtotal-discount,paid=Number(posPaid.value||0);
+ if(!Number.isFinite(paid)||paid<0||paid>total)return alert('প্রাপ্ত টাকা মোটের বেশি বা ঋণাত্মক হতে পারে না');
+ const requested={};
+ for(const x of cart){
+  const q=Number(x.qty),p=products[x.productIndex];
+  if(!Number.isFinite(q)||q<=0||!Number.isFinite(Number(x.total))||Number(x.total)<0)return alert('কার্টে ভুল পরিমাণ বা মূল্য আছে।');
+  if(p&&p.stockTracked){const cv=convertStockQty(q,x.unit,p.unit);if(cv===null)return alert('পণ্যের একক মিলছে না: '+p.name);requested[x.productIndex]=(requested[x.productIndex]||0)+cv;}
+ }
+ for(const key of Object.keys(requested)){const p=products[Number(key)],available=Number(p?.stock);if(!p||!Number.isFinite(available)||available<0||requested[key]>available)return alert('পর্যাপ্ত স্টক নেই: '+(p?.name||'পণ্য')+'। বর্তমান মজুত '+(Number.isFinite(available)?available:0)+' '+(p?.unit||''));}
+ const partyName=posParty.value.trim(),now=new Date().toISOString();
+ for(const key of Object.keys(requested)){
+  const p=products[Number(key)],delta=-requested[key],before=Number(p.stock||0);
+  p.stock=Number((before+delta).toFixed(6));
+  stockMovements.push({id:'sm-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),txId:null,product:p.name,unit:p.unit,qty:requested[key],delta,before,after:p.stock,source:'pos-sale',date:now,reversed:false});
+ }
+ cart.forEach(x=>{
+  const id=Date.now()+Math.random(),p=products[x.productIndex];
+  tx.unshift({id,date:now,type:'income',amount:Number(x.total),party:partyName,product:x.name,qty:x.qty,unit:x.unit,note:'POS বিক্রয়',voided:false,createdAt:now,updatedAt:now});
+  if(p&&p.stockTracked){
+   const cv=convertStockQty(Number(x.qty),x.unit,p.unit);
+   const m=stockMovements.find(v=>v.source==='pos-sale'&&v.product===p.name&&v.date===now&&!v.txId);
+   if(m)m.txId=id;
+   else stockMovements.push({id:'sm-'+Date.now(),txId:id,product:p.name,unit:p.unit,qty:cv,delta:-cv,before:Number(p.stock||0)+cv,after:Number(p.stock||0),source:'pos-sale',date:now,reversed:false});
+  }
+ });
+ if(discount>0)tx.unshift({id:Date.now()+Math.random(),date:now,type:'expense',amount:discount,party:partyName,note:'POS ডিসকাউন্ট সমন্বয়',voided:false});
+ if(paid<total)payments.push({id:Date.now(),date:now,party:partyName||'অজ্ঞাত কাস্টমার',amount:total-paid,type:'creditSale',note:'POS বাকি বিক্রি'});
+ save();document.getElementById('receipt').innerHTML='<h3>রানা হিসাব — বিক্রয় রসিদ</h3><p>কাস্টমার: '+esc(partyName||'সাধারণ')+'</p><p>মোট: '+money(total)+' | পেয়েছি: '+money(paid)+' | বাকি: '+money(total-paid)+'</p><button onclick="window.print()">রসিদ প্রিন্ট</button>';
+ cart=[];renderCart();renderStockHistory();
+};
+function renderStockHistory(){
+ const el=document.getElementById('stockHistory');if(!el)return;
+ const rows=stockMovements.slice().reverse().slice(0,150);
+ el.innerHTML=rows.length?'<table><tr><th>তারিখ</th><th>পণ্য</th><th>ধরন</th><th>পরিমাণ</th><th>আগে</th><th>পরে</th><th>সূত্র</th></tr>'+rows.map(m=>'<tr><td>'+new Date(m.date).toLocaleString('bn-BD')+'</td><td>'+esc(m.product)+'</td><td>'+(Number(m.delta)>=0?'স্টক যোগ':'স্টক কম')+'</td><td>'+Math.abs(Number(m.delta)).toLocaleString('bn-BD')+' '+esc(m.unit)+'</td><td>'+Number(m.before).toLocaleString('bn-BD')+'</td><td>'+Number(m.after).toLocaleString('bn-BD')+'</td><td>'+esc(m.source)+'</td></tr>').join('')+'</table>':'এখনও কোনো স্টক পরিবর্তনের ইতিহাস নেই।';
+}
+const originalBackupForLedger=backup;
+backup=function(){
+ const readStored=(key,fallback)=>{try{const v=JSON.parse(localStorage.getItem(key));return v===null?fallback:v}catch{return fallback}};
+ const data={schemaVersion:4,exportedAt:new Date().toISOString(),transactions:tx,products:products,payments:payments,
+  stockMovements:stockMovements,
+  incomeSources:readStored('ranaIncomeSources',['পণ্য বিক্রি','সার্ভিস চার্জ','কমিশন','ভাড়া','অন্যান্য আয়']),
+  holidays:readStored('ranaHolidays',[]),expenseBudget:readStored('ranaExpenseBudget',{daily:0,monthly:0}),contacts:readStored('ranaContacts',[])};
+ const json=JSON.stringify(data,null,2),fileName='rana-hisab-backup-'+new Date().toISOString().slice(0,10)+'.json';
+ const blob=new Blob([json],{type:'application/json'}),url=URL.createObjectURL(blob);
+ const old=document.getElementById('backupFallback');if(old)old.remove();
+ const panel=document.createElement('div');panel.id='backupFallback';panel.style='position:fixed;inset:0;z-index:99999;background:#0009;display:flex;align-items:center;justify-content:center;padding:14px';
+ panel.innerHTML='<div style="background:white;color:#172033;border-radius:14px;padding:16px;width:100%;max-width:520px;max-height:90vh;overflow:auto"><h3>সম্পূর্ণ ব্যাকআপ তৈরি হয়েছে</h3><p>লেনদেন, পণ্য, পেমেন্ট, স্টক ইতিহাস, পরিচিতি, আয়ের উৎস, ছুটি ও বাজেট অন্তর্ভুক্ত।</p><button id="backupDownload" style="padding:12px;margin:4px;background:#1455aa;color:white;border:0;border-radius:8px">JSON ফাইল ডাউনলোড</button><button id="backupCopy" style="padding:12px;margin:4px;background:#16834a;color:white;border:0;border-radius:8px">সব তথ্য কপি করুন</button><textarea id="backupJsonText" readonly style="width:100%;height:180px;margin-top:10px;font-size:11px"></textarea><p id="backupMsg">ডাউনলোডের পর ফাইলটি নিরাপদে রাখুন।</p><button id="backupClose" style="padding:10px;margin-top:8px">বন্ধ করুন</button></div>';
+ document.body.appendChild(panel);document.getElementById('backupJsonText').value=json;
+ document.getElementById('backupDownload').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=fileName;a.click();document.getElementById('backupMsg').textContent='ডাউনলোড শুরু হয়েছে কি না Downloads ফোল্ডারে দেখুন।'};
+ document.getElementById('backupCopy').onclick=async()=>{const t=document.getElementById('backupJsonText');try{await navigator.clipboard.writeText(json);document.getElementById('backupMsg').textContent='কপি হয়েছে—Notes-এ পেস্ট করে রাখুন।'}catch(e){t.focus();t.select();document.getElementById('backupMsg').textContent='Select all → Copy করে Notes-এ পেস্ট করুন।'}};
+ document.getElementById('backupClose').onclick=()=>{panel.remove();URL.revokeObjectURL(url)};
+};
+const previousRestoreForLedger=restoreData;
+restoreData=function(e){
+ const file=e.target.files&&e.target.files[0];if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const d=JSON.parse(reader.result),legacy=Array.isArray(d);
+   const nextTx=legacy?d:d.transactions,nextProducts=legacy?products:d.products,nextPayments=legacy?payments:d.payments;
+   if(!Array.isArray(nextTx)||!Array.isArray(nextProducts)||!Array.isArray(nextPayments))throw new Error('Invalid backup');
+   if(!confirm('বর্তমান তথ্য প্রতিস্থাপন করবেন? আগে বর্তমান ব্যাকআপ নিন।')){e.target.value='';return;}
+   tx=nextTx;products=nextProducts;payments=nextPayments;
+   if(!legacy){
+    stockMovements=Array.isArray(d.stockMovements)?d.stockMovements:[];
+    if(Array.isArray(d.incomeSources)){incomeSources=d.incomeSources;localStorage.setItem('ranaIncomeSources',JSON.stringify(incomeSources));}
+    if(Array.isArray(d.holidays)){businessHolidays=d.holidays;localStorage.setItem('ranaHolidays',JSON.stringify(businessHolidays));}
+    if(d.expenseBudget&&typeof d.expenseBudget==='object'&&!Array.isArray(d.expenseBudget)){expenseBudget={daily:Number(d.expenseBudget.daily)||0,monthly:Number(d.expenseBudget.monthly)||0};localStorage.setItem('ranaExpenseBudget',JSON.stringify(expenseBudget));}
+    if(Array.isArray(d.contacts)){ranaContacts=d.contacts;localStorage.setItem('ranaContacts',JSON.stringify(ranaContacts));}
+   }else stockMovements=[];
+   save();fillSelects();renderProducts();renderPayments();renderSources();renderHolidays();renderContacts();loadBudgetForm();renderBudgetStatus();renderStockHistory();
+   alert('ব্যাকআপ রিস্টোর হয়েছে। স্টক ইতিহাসসহ তথ্য পুনরুদ্ধার করা হয়েছে।');
+  }catch(err){alert('ব্যাকআপ ফাইলটি সঠিক নয়। কোনো তথ্য পরিবর্তন করা হয়নি।');}
+  e.target.value='';
+ };
+ reader.readAsText(file);
+};
+
 </script>\n</body></html>
