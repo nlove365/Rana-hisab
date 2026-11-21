@@ -732,6 +732,8 @@ function renderStockHistory(){
  const rows=stockMovements.slice().reverse().slice(0,150);
  el.innerHTML=rows.length?'<table><tr><th>তারিখ</th><th>পণ্য</th><th>ধরন</th><th>পরিমাণ</th><th>আগে</th><th>পরে</th><th>সূত্র</th></tr>'+rows.map(m=>'<tr><td>'+new Date(m.date).toLocaleString('bn-BD')+'</td><td>'+esc(m.product)+'</td><td>'+(Number(m.delta)>=0?'স্টক যোগ':'স্টক কম')+'</td><td>'+Math.abs(Number(m.delta)).toLocaleString('bn-BD')+' '+esc(m.unit)+'</td><td>'+Number(m.before).toLocaleString('bn-BD')+'</td><td>'+Number(m.after).toLocaleString('bn-BD')+'</td><td>'+esc(m.source)+'</td></tr>').join('')+'</table>':'এখনও কোনো স্টক পরিবর্তনের ইতিহাস নেই।';
 }
+const showBeforeStockHistory=show;show=function(id){showBeforeStockHistory(id);if(id==='products')renderStockHistory();};
+
 const originalBackupForLedger=backup;
 backup=function(){
  const readStored=(key,fallback)=>{try{const v=JSON.parse(localStorage.getItem(key));return v===null?fallback:v}catch{return fallback}};
