@@ -371,7 +371,7 @@ function restoreData(e){
    let d=JSON.parse(r.result);
    if(!confirm('বর্তমান তথ্যের সঙ্গে ব্যাকআপের তথ্য প্রতিস্থাপন করবেন? আগে বর্তমান ব্যাকআপ নিন।')){e.target.value='';return;}
    const legacy=Array.isArray(d);
-   const nextTx=legacy?d:d.transactions,nextProducts=legacy?products:d.products,nextPayments=legacy?payments:d.payments;
+   const nextTx=legacy?d:d.transactions,nextProducts=legacy?products:d.products,nextPayments=legacy?payments:(Array.isArray(d.payments)?d.payments:payments);
    if(!Array.isArray(nextTx)||!Array.isArray(nextProducts)||!Array.isArray(nextPayments))throw new Error('invalid backup arrays');
    tx=nextTx;products=nextProducts;payments=nextPayments;
    if(!legacy){
