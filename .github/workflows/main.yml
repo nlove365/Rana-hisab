@@ -145,6 +145,8 @@ jobs:
                   "barcode product registration": 'id="pBarcode"' in html and "barcode" in html,
                   "Barcode field is present": "id=\"pBarcode\"" in html and "id=\"posBarcode\"" in html,
                   "Barcode camera UI placeholder": "id=\"barcodeVideo\"" in html and "id=\"barcodeStatus\"" in html,
+                  "Barcode camera implementation": "function lookupPosBarcode()" in html and "function startBarcodeCamera()" in html and "BarcodeDetector" in html,
+                  "safe local storage JSON parsing": "function ranaReadJSON(key,fallback)" in html and "window.ranaStorageWarnings" in html,
                   "low stock threshold": 'id="pMinStock"' in html and "minStock" in html,
                   "low stock alerts": "function getLowStockProducts()" in html and "কম মজুত পণ্য" in html,
                   "task manager UI": 'id="tasks"' in html and "function addRanaTask()" in html and "function renderRanaTasks()" in html,
