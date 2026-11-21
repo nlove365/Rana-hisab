@@ -232,7 +232,7 @@ function seedCatalog(showNotice=true){
  save();renderProducts();fillSelects();
  if(showNotice)alert('বাংলা পণ্যের তালিকা যুক্ত হয়েছে। নতুন যোগ হয়েছে '+added.length+'টি পণ্য।');
 }
-const money=n=>'৳'+Number(n||0).toLocaleString('bn-BD');
+const money=n=>'৳'+Number(n||0).toLocaleString(window.ranaNumberLocale||'bn-BD');
 function save(){localStorage.setItem('hisabPro',JSON.stringify(tx));localStorage.setItem('hisabProducts',JSON.stringify(products));localStorage.setItem('ranaPayments',JSON.stringify(payments||[]));render();}
 function show(id){['dash','add','list','cmd','products','photo','pos','returns','reports','payments','sources','holidays','budget','searchhub','help','tasks','contacts'].forEach(x=>{const el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!==id)});render();if(id==='sources')renderSources();if(id==='holidays')renderHolidays();if(id==='budget')loadBudgetForm();if(id==='searchhub')document.getElementById('globalSearchInput')?.focus();if(id==='contacts')renderContacts();if(id==='tasks'&&typeof renderRanaTasks==='function')renderRanaTasks();if(id==='returns'&&typeof renderReturns==='function')renderReturns();}
 function fillSelects(){
@@ -910,7 +910,9 @@ renderRanaTasks();checkRanaTaskReminders();setInterval(checkRanaTaskReminders,60
   if(el.type==='number'){el.type='text';el.setAttribute('inputmode','decimal');}
   el.dataset.ranaNumericReady='1';
   el.addEventListener('input',function(){
-   const start=this.selectionStart,old=this.value,next=window.ranaNormalizeNumberInput(old);
+   const start=this.selectionStart,old=this.value;
+   if(/[০-৯]/.test(old))window.ranaNumberLocale='bn-BD';else if(/[0-9]/.test(old))window.ranaNumberLocale='en-US';
+   const next=window.ranaNormalizeNumberInput(old);
    if(next!==old){this.value=next;try{const pos=Math.max(0,(start??old.length)-(old.length-next.length));this.setSelectionRange(pos,pos);}catch(e){}}
   });
   el.addEventListener('change',function(){this.value=window.ranaNormalizeNumberInput(this.value);});
