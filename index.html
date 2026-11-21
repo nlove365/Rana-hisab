@@ -724,6 +724,7 @@ del=function(id){
   stockMovements.push({id:'sm-rev-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),txId:x.id,product:p.name,unit:m.unit,qty:m.qty,delta,before,after:p.stock,source:'void-reversal',date:new Date().toISOString(),reverses:m.id,reversed:false});
  }
  if(x.posForTxId){const discountEntry=tx.find(t=>String(t.id)===String(x.posForTxId)&&!t.voided);if(discountEntry){discountEntry.voided=true;discountEntry.voidedAt=new Date().toISOString();}}
+ x.voided=true;x.voidedAt=new Date().toISOString();
  if(x.posBatchId){
   payments.filter(p=>!p.voided&&p.type==='creditSale'&&p.posBatchId===x.posBatchId).forEach(p=>{
    const reduction=Math.max(0,Number(x.creditDueAmount)||0);
@@ -732,7 +733,7 @@ del=function(id){
    else if(p.amount<=0.005){p.amount=0;p.voided=true;p.voidedAt=new Date().toISOString();}
   });
  }
- x.voided=true;x.voidedAt=new Date().toISOString();save();renderStockHistory();renderPayments();
+ save();renderStockHistory();renderPayments();
 };
 checkout=function(){
  if(!cart.length)return alert('কার্টে পণ্য যোগ করুন');
