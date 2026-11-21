@@ -58,6 +58,20 @@ jobs:
           echo "Synced latest web app files into $ASSET_DIR"
           grep -q "স্বপ্নময় ইনক বিডি" "$ASSET_DIR/index.html"
 
+      - name: Check embedded JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          import pathlib, re, subprocess
+          html = pathlib.Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script[^>]*>(.*?)</script\\s*>", html, re.I | re.S)
+          if not scripts:
+              raise SystemExit("No inline JavaScript found")
+          for i, source in enumerate(scripts):
+              path = pathlib.Path(f"/tmp/rana-script-{i}.js")
+              path.write_text(source, encoding="utf-8")
+              subprocess.run(["node", "--check", str(path)], check=True)
+          print(f"PASS: syntax checked in {len(scripts)} script block(s)")
+          PY
       - name: Set Android launcher icon
         run: |
           python3 - <<'PY'
@@ -117,6 +131,9 @@ jobs:
                   "POS discount validation": "ছাড় সাবটোটালের" in html,
                   "smart command confirmation": "function confirmCommand()" in html,
                   "inventory stock tracking": "function adjustStock()" in html and "stockTracked" in html,
+                  "POS aggregate stock validation": "কার্টসহ পর্যাপ্ত স্টক নেই" in html and "requested[key]>available" in html,
+                  "POS stock deduction": "p.stock=Number(p.stock)-requested[key]" in html,
+                  "POS credit sale ledger": "type:'creditSale',note:'POS বাকি বিক্রি'" in html,
                   "in-app update prompt": "ranaUpdateNotice" in html and "controllerchange" in html,
               }
               for label, ok in checks.items():
