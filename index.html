@@ -620,8 +620,8 @@ function consumeCostLayers(product,qty){
  saveCostLayers();
  return {allocations,unknownQty:Math.max(0,remaining)};
 }
-function restoreCostAllocations(product,allocations){
- (allocations||[]).forEach(a=>{if(Number(a.qty)>0)addCostLayer(product,Number(a.qty),Number(a.unitCost)||0,'sales-return',null);});
+function restoreCostAllocations(product,allocations,txId){
+ (allocations||[]).forEach(a=>{if(Number(a.qty)>0)addCostLayer(product,Number(a.qty),Number(a.unitCost)||0,'sales-return',txId);});
 }
 const ranaOriginalAddTx=addTx;
 addTx=function(t=null,a=null,p='',n='',prod='',q='',u=''){
@@ -681,7 +681,7 @@ function recordSalesReturn(){
  const entry={id:idNew,date:now,type:'expense',amount,party:sale.party||'',product:sale.product,qty,unit:sale.unit||'টি',note:'বিক্রয় ফেরত: '+(document.getElementById('returnNote').value.trim()||'কারণ উল্লেখ নেই'),isSalesReturn:true,linkedSaleTxId:sale.id,returnCostAllocations:returnCosts,voided:false,createdAt:now,updatedAt:now};
  tx.unshift(entry);
  if(p?.stockTracked){const before=Number(p.stock||0),after=Number((before+baseQty).toFixed(6));p.stock=after;stockMovements.push({id:'sm-ret-'+Date.now(),txId:idNew,product:p.name,unit:p.unit,qty:baseQty,delta:baseQty,before,after,source:'sales-return',date:now,reversed:false});}
- if(p&&returnCosts.length)restoreCostAllocations(p,returnCosts);
+ if(p&&returnCosts.length)restoreCostAllocations(p,returnCosts,idNew);
  save();renderStockHistory();document.getElementById('returnNote').value='';document.getElementById('returnAmount').dataset.edited='';refreshSalesReturnOptions();alert('বিক্রয় ফেরত সংরক্ষণ হয়েছে।');
 }
 function runInventoryAudit(){
@@ -707,7 +707,6 @@ makeReport=function(){
 };
 const ranaOriginalBackupV6=backup;
 backup=function(){
- const oldSet=saveCostLayers;saveCostLayers=()=>{};
  const panel=document.getElementById('backupFallback');if(panel)panel.remove();
  const readStored=(key,fallback)=>{try{const v=JSON.parse(localStorage.getItem(key));return v===null?fallback:v}catch{return fallback}};
  const data={schemaVersion:6,exportedAt:new Date().toISOString(),transactions:tx,products:products,payments:payments,tasks:ranaTasks,stockMovements,costLayers:ranaCostLayers,incomeSources:readStored('ranaIncomeSources',[]),holidays:readStored('ranaHolidays',[]),expenseBudget:readStored('ranaExpenseBudget',{daily:0,monthly:0}),contacts:readStored('ranaContacts',[])};
