@@ -72,6 +72,27 @@ jobs:
               subprocess.run(["node", "--check", str(path)], check=True)
           print(f"PASS: syntax checked in {len(scripts)} script block(s)")
           PY
+      - name: Verify recent Rana Hisab settings and Bengali numeral features
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          checks = {
+              "Settings panel": 'id="settings"' in html,
+              "Settings save function": "saveRanaSettings" in html,
+              "Business settings fields": all(x in html for x in ["ranaBizName", "ranaBizPhone", "ranaBizAddress"]),
+              "Numeral preference options": all(x in html for x in ["ranaNumberLocale", "auto", "bn-BD", "en-US"]),
+              "Bengali digit normalization": "০" in html and "normalize" in html.lower(),
+              "Dark theme setting": "ranaTheme" in html and "dark" in html,
+              "Barcode scan functions": all(x in html for x in ["lookupPosBarcode", "startBarcodeCamera", "BarcodeDetector"]),
+              "Backup and restore": all(x in html for x in ["function backup()", "function restoreData(event)"]),
+          }
+          for label, ok in checks.items():
+              print(("PASS: " if ok else "FAIL: ") + label)
+          if not all(checks.values()):
+              raise SystemExit("Recent feature verification failed.")
+          PY
+
       - name: Set Android launcher icon
         run: |
           python3 - <<'PY'
