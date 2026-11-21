@@ -147,6 +147,9 @@ jobs:
                   "camera barcode scanning": "function startBarcodeCamera()" in html and "BarcodeDetector" in html,
                   "low stock threshold": 'id="pMinStock"' in html and "minStock" in html,
                   "low stock alerts": "function getLowStockProducts()" in html and "কম মজুত পণ্য" in html,
+                  "task manager UI": 'id="tasks"' in html and "function addRanaTask()" in html and "function renderRanaTasks()" in html,
+                  "task reminder": "function checkRanaTaskReminders()" in html and "requestTaskNotification()" in html,
+                  "task backup restore": "tasks:ranaTasks" in html and "ranaTasks=Array.isArray(d.tasks)?d.tasks:[]" in html,
                   "in-app update prompt": "ranaUpdateNotice" in html and "controllerchange" in html,
               }
               for label, ok in checks.items():
