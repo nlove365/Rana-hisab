@@ -106,7 +106,9 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 </div>
 <div class="row"><div><label>ডিফল্ট একক</label><select id="punit"></select></div>
 <div><label>ক্যাটাগরি অনুযায়ী দেখুন</label><select id="productCategoryFilter" onchange="renderProducts()"><option value="">সব ক্যাটাগরি</option></select></div></div>
+<div class="row"><div><label>ক্রয়মূল্য (৳/একক)</label><input id="pBuyPrice" type="number" min="0" step="any" placeholder="ঐচ্ছিক"></div><div><label>বিক্রয়মূল্য (৳/একক)</label><input id="pSellPrice" type="number" min="0" step="any" placeholder="ঐচ্ছিক"></div></div>
 <p><button class="primary" onclick="addProduct()">➕ পণ্য যোগ করুন</button> <button onclick="seedCatalog()">📚 সম্পূর্ণ পণ্যের তালিকা যুক্ত করুন</button></p>
+<div class="card" style="margin-top:12px"><h3>📥 স্টক যোগ / প্রারম্ভিক স্টক</h3><div class="row"><div><label>পণ্য</label><select id="stockProduct"></select></div><div><label>পরিমাণ যোগ করুন</label><input id="stockQty" type="number" min="0.0001" step="any" placeholder="যেমন ১০"></div></div><p><button onclick="adjustStock()">স্টক সংরক্ষণ</button></p><small>প্রথমবার এখানে বর্তমান মজুত লিখে দিন। এরপর POS বিক্রিতে স্টক স্বয়ংক্রিয়ভাবে কমবে।</small></div>
 <div class="hint">প্রতিটি পণ্যের ক্যাটাগরি ও একক নির্বাচন করুন। নতুন পণ্যও নিজের মতো যোগ করতে পারবেন।</div>
 <div id="productTable"></div>
 </div></section>
@@ -233,6 +235,7 @@ function fillSelects(){
   if(filter){const selected=filter.value;filter.innerHTML='<option value="">সব ক্যাটাগরি</option>'+categories.map(x=>`<option>${x}</option>`).join('');filter.value=selected;}
   products.forEach(p=>{if(!p.category)p.category='অন্যান্য';});
   product.innerHTML='<option value="">পণ্য নির্বাচন করুন</option>'+products.map((p,i)=>`<option value="${i}">${esc(p.name)} — ${esc(p.category)} (${esc(p.unit)})</option>`).join('');
+  const sp=document.getElementById('stockProduct');if(sp){const old=sp.value;sp.innerHTML='<option value="">পণ্য নির্বাচন করুন</option>'+products.map((p,i)=>`<option value="${i}">${esc(p.name)} (${esc(p.unit)})</option>`).join('');if(old!==''&&products[Number(old)])sp.value=old;}
 }
 function clearForm(){
   amount.value=''; party.value=''; note.value=''; qty.value=''; newproduct.value=''; product.value='';
@@ -241,12 +244,13 @@ function addProduct(){
   const n=pname.value.trim(), u=punit.value||'টি', category=pcategory.value||'অন্যান্য';
   if(!n)return alert('পণ্যের নাম দিন');
   if(products.some(p=>p.name.toLowerCase()===n.toLowerCase()))return alert('এই পণ্য আগে থেকেই আছে');
-  products.push({name:n,unit:u,category}); save(); pname.value=''; renderProducts(); fillSelects();
+  products.push({name:n,unit:u,category,buyPrice:Number(document.getElementById('pBuyPrice').value||0),sellPrice:Number(document.getElementById('pSellPrice').value||0),stock:0,stockTracked:false}); save(); pname.value='';document.getElementById('pBuyPrice').value='';document.getElementById('pSellPrice').value=''; renderProducts(); fillSelects();
 }
 function renderProducts(){
-  productTable.innerHTML=products.length?'<table><tr><th>পণ্য</th><th>একক</th><th></th></tr>'+
-  products.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.unit)}</td><td><button class="danger" onclick="deleteProduct(${i})">মুছুন</button></td></tr>`).join('')+'</table>':'এখনও কোনো পণ্য যোগ করা হয়নি।';
+  productTable.innerHTML=products.length?'<table><tr><th>পণ্য</th><th>একক</th><th>ক্রয়/বিক্রয়</th><th>মজুত</th><th></th></tr>'+
+  products.map((p,i)=>`<tr><td>${esc(p.name)}<br><small>${esc(p.category||'অন্যান্য')}</small></td><td>${esc(p.unit)}</td><td>${money(p.buyPrice||0)} / ${money(p.sellPrice||0)}</td><td>${p.stockTracked?Number(p.stock||0).toLocaleString('bn-BD')+' '+esc(p.unit):'স্টক সেট হয়নি'}</td><td><button class="danger" onclick="deleteProduct(${i})">মুছুন</button></td></tr>`).join('')+'</table>':'এখনও কোনো পণ্য যোগ করা হয়নি।';
 }
+function adjustStock(){var i=Number(document.getElementById('stockProduct').value),q=Number(document.getElementById('stockQty').value),p=products[i];if(!p||!Number.isFinite(q)||q<=0)return alert('পণ্য ও সঠিক পরিমাণ দিন');p.stock=Number(p.stock||0)+q;p.stockTracked=true;save();document.getElementById('stockQty').value='';renderProducts();fillSelects();alert('স্টক সংরক্ষণ হয়েছে');}
 function deleteProduct(i){if(confirm('পণ্যটি তালিকা থেকে মুছবেন?')){products.splice(i,1);save();renderProducts();fillSelects();}}
 function addTx(t=null,a=null,p='',n='',prod='',q='',u=''){
   let type=t||document.getElementById('type').value, amount=Number(a??document.getElementById('amount').value);
@@ -417,9 +421,9 @@ function showAudit(id){let x=tx.find(t=>t.id===id);if(!x)return;let h=Array.isAr
 function renderProducts(){let el=document.getElementById('productTable');if(!el)return;let filter=document.getElementById('productCategoryFilter')?.value||'';let list=products.map((p,i)=>({p,i})).filter(x=>!filter||(x.p.category||'অন্যান্য')===filter);el.innerHTML=list.length?'<table><tr><th>ক্যাটাগরি</th><th>পণ্য</th><th>একক</th><th>বর্তমান স্টক</th><th></th></tr>'+list.map(({p,i})=>`<tr><td>${esc(p.category||'অন্যান্য')}</td><td>${esc(p.name)}</td><td>${esc(p.unit)}</td><td>${stockFor(p.name).toLocaleString('bn-BD')}</td><td><button class="danger" onclick="deleteProduct(${i})">মুছুন</button></td></tr>`).join('')+'</table>':'এই ক্যাটাগরিতে পণ্য নেই।'}
 function render(){fillSelects();renderProducts();let live=activeTx();let inc=live.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount),0),exp=live.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount),0);income.textContent=money(inc);expense.textContent=money(exp);balance.textContent=money(inc-exp);count.textContent=live.length;renderDashboard();renderBudgetStatus();let q=(document.getElementById('search')?.value||'').toLowerCase(),arr=tx.filter(x=>(x.party+' '+x.note+' '+x.product).toLowerCase().includes(q));let t=document.getElementById('table');if(t)t.innerHTML=arr.length?'<table><tr><th>তারিখ</th><th>খাত</th><th>ধরন</th><th>টাকা</th><th>অ্যাকশন</th></tr>'+arr.map(x=>`<tr style="opacity:${x.voided?'.5':'1'}"><td>${new Date(x.date).toLocaleDateString('bn-BD')}</td><td>${esc(x.party||'—')}<br>${esc(x.product||'')}${x.qty?` — ${esc(x.qty)} ${esc(x.unit||'')}`:''}<br>${esc(x.note||'')}</td><td>${x.voided?'বাতিল':x.type==='income'?'আয়':'খরচ'}</td><td>${money(x.amount)}</td><td>${x.voided?'—':`<button onclick="editTx(${x.id})">এডিট</button> <button onclick="showAudit(${x.id})">ইতিহাস</button> <button class="danger" onclick="del(${x.id})">Void</button>`}</td></tr>`).join('')+'</table>':'কোনো লেনদেন নেই';let r=document.getElementById('recent');if(r)r.innerHTML=live.slice(0,7).map(x=>`<p>${x.type==='income'?'🟢':'🔴'} ${esc(x.party||x.note||'লেনদেন')} — <b>${money(x.amount)}</b></p>`).join('')||'এখনও কোনো হিসাব নেই';}
 function fillPos(){let el=document.getElementById('posProduct');if(el)el.innerHTML=products.map((p,i)=>`<option value="${i}">${esc(p.name)} — ${esc(p.category||'অন্যান্য')} (${esc(p.unit)}) — স্টক ${stockFor(p.name).toLocaleString('bn-BD')}</option>`).join('')||'<option>আগে পণ্য যোগ করুন</option>';renderCart()}
-function cartAdd(){let i=Number(posProduct.value),p=products[i],q=Number(posQty.value),price=Number(posPrice.value);if(!p||!Number.isFinite(q)||q<=0||!Number.isFinite(price)||price<0)return alert('পণ্য, পরিমাণ ও মূল্য সঠিক দিন');cart.push({name:p.name,unit:p.unit,qty:q,price,total:q*price});renderCart()}
+function cartAdd(){let i=Number(posProduct.value),p=products[i],q=Number(posQty.value),price=Number(posPrice.value||p?.sellPrice||0);if(p&&(!posPrice.value||Number(posPrice.value)===0)&&p.sellPrice)posPrice.value=p.sellPrice;if(!p||!Number.isFinite(q)||q<=0||!Number.isFinite(price)||price<0)return alert('পণ্য, পরিমাণ ও মূল্য সঠিক দিন');if(p.stockTracked&&q>Number(p.stock||0))return alert('পর্যাপ্ত স্টক নেই। বর্তমান মজুত: '+Number(p.stock||0)+' '+p.unit);cart.push({productIndex:i,name:p.name,unit:p.unit,qty:q,price,total:q*price});renderCart()}
 function renderCart(){let el=document.getElementById('cartView');if(!el)return;let sum=cart.reduce((a,x)=>a+x.total,0),discount=Number(document.getElementById('posDiscount')?.value||0);el.innerHTML=cart.length?'<table><tr><th>পণ্য</th><th>পরিমাণ</th><th>মোট</th></tr>'+cart.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.qty} ${esc(x.unit)}</td><td>${money(x.total)}</td></tr>`).join('')+`</table><b>সাবটোটাল: ${money(sum)} | ছাড়: ${money(discount)} | মোট: ${money(Math.max(0,sum-discount))}</b>`:'কার্ট খালি';}
-function checkout(){if(!cart.length)return alert('কার্টে পণ্য যোগ করুন');let subtotal=cart.reduce((a,x)=>a+x.total,0),discount=Number(posDiscount.value||0);if(!Number.isFinite(discount)||discount<0||discount>subtotal)return alert('ছাড় সাবটোটালের চেয়ে বেশি বা ঋণাত্মক হতে পারে না');let total=subtotal-discount,paid=Number(posPaid.value||0);if(!Number.isFinite(paid)||paid<0||paid>total)return alert('প্রাপ্ত টাকা মোটের বেশি বা ঋণাত্মক হতে পারে না');let partyName=posParty.value.trim();cart.forEach(x=>tx.unshift({id:Date.now()+Math.random(),date:new Date().toISOString(),type:'income',amount:x.total,party:partyName,product:x.name,qty:x.qty,unit:x.unit,note:'POS বিক্রয়',voided:false}));if(Number(posDiscount.value||0)>0)tx.unshift({id:Date.now()+Math.random(),date:new Date().toISOString(),type:'expense',amount:Number(posDiscount.value),party:partyName,note:'POS ডিসকাউন্ট সমন্বয়',voided:false});if(paid<total){payments.push({id:Date.now(),date:new Date().toISOString(),party:partyName||'অজ্ঞাত কাস্টমার',amount:total-paid,type:'due',note:'POS বাকি'});}save();document.getElementById('receipt').innerHTML=`<h3>রানা হিসাব — বিক্রয় রসিদ</h3><p>কাস্টমার: ${esc(partyName||'সাধারণ')}</p><p>মোট: ${money(total)} | পেয়েছি: ${money(paid)} | বাকি: ${money(total-paid)}</p><button onclick="window.print()">রসিদ প্রিন্ট</button>`;cart=[];renderCart();}
+function checkout(){if(!cart.length)return alert('কার্টে পণ্য যোগ করুন');let subtotal=cart.reduce((a,x)=>a+x.total,0),discount=Number(posDiscount.value||0);if(!Number.isFinite(discount)||discount<0||discount>subtotal)return alert('ছাড় সাবটোটালের চেয়ে বেশি বা ঋণাত্মক হতে পারে না');let total=subtotal-discount,paid=Number(posPaid.value||0);if(!Number.isFinite(paid)||paid<0||paid>total)return alert('প্রাপ্ত টাকা মোটের বেশি বা ঋণাত্মক হতে পারে না');let partyName=posParty.value.trim();cart.forEach(x=>{let p=products[x.productIndex];if(p&&p.stockTracked)p.stock=Math.max(0,Number(p.stock||0)-x.qty);tx.unshift({id:Date.now()+Math.random(),date:new Date().toISOString(),type:'income',amount:x.total,party:partyName,product:x.name,qty:x.qty,unit:x.unit,note:'POS বিক্রয়',voided:false});});if(Number(posDiscount.value||0)>0)tx.unshift({id:Date.now()+Math.random(),date:new Date().toISOString(),type:'expense',amount:Number(posDiscount.value),party:partyName,note:'POS ডিসকাউন্ট সমন্বয়',voided:false});if(paid<total){payments.push({id:Date.now(),date:new Date().toISOString(),party:partyName||'অজ্ঞাত কাস্টমার',amount:total-paid,type:'due',note:'POS বাকি'});}save();document.getElementById('receipt').innerHTML=`<h3>রানা হিসাব — বিক্রয় রসিদ</h3><p>কাস্টমার: ${esc(partyName||'সাধারণ')}</p><p>মোট: ${money(total)} | পেয়েছি: ${money(paid)} | বাকি: ${money(total-paid)}</p><button onclick="window.print()">রসিদ প্রিন্ট</button>`;cart=[];renderCart();}
 function makeReport(){let from=reportFrom.value?new Date(reportFrom.value+'T00:00:00'):new Date('2000-01-01'),to=reportTo.value?new Date(reportTo.value+'T23:59:59'):new Date('2100-01-01');if(from>to)return alert('শুরুর তারিখ শেষের তারিখের পরে হতে পারে না');let a=activeTx().filter(x=>new Date(x.date)>=from&&new Date(x.date)<=to),inc=a.filter(x=>x.type==='income').reduce((s,x)=>s+x.amount,0),exp=a.filter(x=>x.type==='expense').reduce((s,x)=>s+x.amount,0);reportResult.innerHTML=`<p>লেনদেন: ${a.length}</p><p>মোট আয়/বিক্রয়: <b>${money(inc)}</b></p><p>মোট খরচ/ক্রয়: <b>${money(exp)}</b></p><p>নিট পার্থক্য: <b>${money(inc-exp)}</b></p><p class="small">এটি প্রাথমিক নগদভিত্তিক সারাংশ; প্রকৃত লাভের জন্য বিক্রীত পণ্যের ক্রয়মূল্য/COGS ও অন্যান্য সমন্বয় প্রয়োজন।</p>`}
 function recordPayment(){let partyName=payParty.value.trim(),amount=Number(payAmount.value);if(!partyName||!Number.isFinite(amount)||amount<=0)return alert('ব্যক্তির নাম ও সঠিক টাকা দিন');payments.push({id:Date.now(),date:new Date().toISOString(),party:partyName,amount,type:payType.value,note:payNote.value});save();payAmount.value='';payNote.value='';renderPayments();}
 function renderPayments(){let el=document.getElementById('paymentHistory');if(!el)return;el.innerHTML=payments.length?'<table><tr><th>তারিখ</th><th>ব্যক্তি</th><th>ধরন</th><th>টাকা</th><th>বিবরণ</th></tr>'+payments.slice().reverse().map(x=>`<tr><td>${new Date(x.date).toLocaleDateString('bn-BD')}</td><td>${esc(x.party)}</td><td>${x.type==='receive'?'বাকি আদায়':x.type==='pay'?'বাকি পরিশোধ':x.type==='creditSale'?'বাকি বিক্রি':x.type==='creditPurchase'?'বাকি ক্রয়':'অন্যান্য'}</td><td>${money(x.amount)}</td><td>${esc(x.note||'')}</td></tr>`).join('')+'</table>':'এখনো পেমেন্ট নেই'}
@@ -495,9 +499,27 @@ render();
 renderBudgetStatus();
 
 </script>
+<div id="ranaUpdateNotice" style="display:none;position:fixed;z-index:99999;left:12px;right:12px;bottom:12px;background:#173b70;color:white;padding:14px;border-radius:14px;box-shadow:0 8px 30px #0004"><strong>রানা হিসাবের নতুন সংস্করণ প্রস্তুত</strong><p style="margin:6px 0 10px;font-size:13px">আপডেট চালু করতে নিচের বোতাম চাপুন। আপনার সংরক্ষিত হিসাব ফোনেই থাকবে।</p><button id="ranaUpdateNow" style="background:white;color:#173b70">এখন আপডেট করুন</button><button id="ranaUpdateLater" style="background:#ffffff22;color:white">পরে</button></div>
 <script>
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+ let ranaReg=null, reloading=false;
+ const notice=()=>document.getElementById('ranaUpdateNotice');
+ window.addEventListener('load', async()=>{
+  try{
+   ranaReg=await navigator.serviceWorker.register('./sw.js');
+   await ranaReg.update();
+   if(ranaReg.waiting && navigator.serviceWorker.controller)notice().style.display='block';
+   ranaReg.addEventListener('updatefound',()=>{
+    const worker=ranaReg.installing;
+    if(worker)worker.addEventListener('statechange',()=>{
+     if(worker.state==='installed'&&navigator.serviceWorker.controller)notice().style.display='block';
+    });
+   });
+   document.getElementById('ranaUpdateNow').onclick=()=>{if(ranaReg&&ranaReg.waiting)ranaReg.waiting.postMessage({type:'SKIP_WAITING'});else location.reload();};
+   document.getElementById('ranaUpdateLater').onclick=()=>notice().style.display='none';
+  }catch(e){}
+ });
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!reloading){reloading=true;location.reload();}});
 }
 </script>
 
