@@ -438,7 +438,7 @@ async function startBarcodeCamera(){
  if(!('BarcodeDetector' in window)){if(status)status.textContent='এই ব্রাউজারে ক্যামেরা বারকোড শনাক্তকরণ নেই। USB/Bluetooth স্ক্যানার বা নম্বর লিখুন।';return;}
  if(!navigator.mediaDevices?.getUserMedia){if(status)status.textContent='ক্যামেরা ব্যবহারের অনুমতি বা সমর্থন নেই।';return;}
  try{
-  barcodeDetector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','qr_code']});
+  const supported=await BarcodeDetector.getSupportedFormats();const wanted=['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','qr_code'].filter(x=>supported.includes(x));if(!wanted.length)throw new Error('No supported barcode formats');barcodeDetector=new BarcodeDetector({formats:wanted});
   barcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
   video.srcObject=barcodeStream;panel.style.display='block';await video.play();
   if(status)status.textContent='বারকোড ক্যামেরার সামনে ধরুন…';
@@ -488,7 +488,7 @@ seedCatalog(false);
 
 // Offline Help Center (clearly marked as non-AI)
 function runHelpSearch(){const q=(document.getElementById('helpQuestion')?.value||'').trim().toLowerCase();const out=document.getElementById('helpAnswers');if(!out)return;const topics=[['লেনদেন','আমার লেনদেন খুলুন → আয়/খরচ বাছুন → টাকার পরিমাণ লিখুন → সংরক্ষণ চাপুন।'],['পণ্য','পণ্য বিভাগে ক্যাটাগরি, নাম ও একক নির্বাচন করে পণ্য যোগ করুন।'],['ব্যাকআপ','ব্যাকআপ বোতাম চাপুন। JSON ফাইল ডাউনলোড/শেয়ার হলে সেটি নিরাপদ জায়গায় রাখুন।'],['রিস্টোর','রিস্টোর চাপুন, JSON ব্যাকআপ ফাইল নির্বাচন করুন এবং ডেটা যাচাই করুন।'],['রিপোর্ট','রিপোর্ট বিভাগে তারিখের সীমা দিয়ে রিপোর্ট দেখুন।'],['pos','POS-এ পণ্য, পরিমাণ, মূল্য ও ছাড় দিয়ে কার্টে যোগ করুন; প্রাপ্ত টাকা লিখে বিক্রি সম্পন্ন করুন।'],['স্মার্ট কমান্ড','স্মার্ট কমান্ডে বাংলায় আয়/খরচ লিখে কমান্ড চালান; সংরক্ষণের আগে ফল যাচাই করুন।'],['ছুটি','ছুটি বিভাগে ছুটির নাম ও তারিখ লিখে যোগ করুন।'],['সার্চ','আমার খোঁজে পণ্য, ব্যক্তি, লেনদেন বা আয়ের উৎস লিখে খুঁজুন।'],['বাকি','পেমেন্ট বিভাগে ব্যক্তি, পরিমাণ, আদায়/পরিশোধের ধরন ও বিবরণ দিয়ে সংরক্ষণ করুন।']];const hits=topics.filter(([k,a])=>(k+' '+a).toLowerCase().includes(q));out.innerHTML=q?(hits.length?'<ul>'+hits.map(([k,a])=>'<li><b>'+esc(k)+'</b>: '+esc(a)+'</li>').join('')+'</ul>':'<p class="hint">এই বিষয়ে অফলাইন নির্দেশনা পাওয়া যায়নি। প্রশ্নটি আরও সহজ করে লিখুন।</p>'):'<p class="hint">ব্যাকআপ, রিস্টোর, পণ্য, রিপোর্ট, POS, সার্চ, লেনদেন ইত্যাদি লিখুন।</p>';}
-\nfunction runGlobalSearch(){
+function runGlobalSearch(){
  const input=document.getElementById('globalSearchInput'),out=document.getElementById('globalSearchResults');
  if(!input||!out)return;
  const q=input.value.trim().toLocaleLowerCase('bn-BD');
