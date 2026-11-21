@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#183b70">
-<meta name="app-build" content="2026-11-21-rana-sales-return-fifo-audit-1">
+<meta name="app-build" content="2026-11-21-rana-welcome-calendar-1">
 <meta name="description" content="বাংলা ভাষায় সহজ আয়-ব্যয় ও পণ্য হিসাব রাখুন।">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.jpg" type="image/jpeg">
@@ -37,7 +37,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <header><div class="wrap"><div style="display:flex;align-items:center;gap:12px"><img src="icon.jpg" alt="রানা হিসাব লোগো" width="58" height="58" style="display:block;flex:0 0 58px;border-radius:14px;background:#fff;padding:4px"><div><div class="sub" style="font-weight:700;margin-bottom:6px">বিসমিল্লাহির রাহমানির রাহিম</div><h1>🧾 রানা হিসাব</h1><div class="sub">দৈনন্দিন জীবনের সকল কিছু এক ব্যানারে</div></div></div></div></header>
 <div class="wrap">
 <nav>
-<button onclick="show('dash')">ড্যাশবোর্ড</button><button onclick="show('add')">আমার লেনদেন</button><button onclick="show('products')">পণ্য</button><button onclick="show('list')">লেনদেন</button><button onclick="show('cmd')">🎙️ স্মার্ট কমান্ড</button><button onclick="show('photo')">📷 ছবি</button><button onclick="show('pos')">🛒 POS</button><button onclick="show('returns')">↩️ বিক্রয় ফেরত / স্টক যাচাই</button><button onclick="show('reports')">📊 রিপোর্ট</button><button onclick="show('payments')">💳 পেমেন্ট</button><button onclick="show('sources')">💰 আয়ের উৎস</button><button onclick="show('holidays')">📅 ছুটি</button><button onclick="show('budget')">🔔 অ্যালার্টঘর</button><button onclick="show('help')">🤖 এআই প্রযুক্তি হেল্প সেন্টার</button><button onclick="show('searchhub')">🔎 আমার খোঁজ</button><button onclick="show('contacts')">👥 পরিচিতি</button><button onclick="show('tasks')">✅ কাজ ও রিমাইন্ডার</button><button onclick="backup()">ব্যাকআপ</button><button onclick="restore.click()">রিস্টোর</button>
+<button onclick="show('dash')">🧾 রানা হিসাব</button><button onclick="show('add')">আমার লেনদেন</button><button onclick="show('products')">পণ্য</button><button onclick="show('list')">লেনদেন</button><button onclick="show('cmd')">🎙️ স্মার্ট কমান্ড</button><button onclick="show('photo')">📷 ছবি</button><button onclick="show('pos')">🛒 POS</button><button onclick="show('returns')">↩️ বিক্রয় ফেরত / স্টক যাচাই</button><button onclick="show('reports')">📊 রিপোর্ট</button><button onclick="show('payments')">💳 পেমেন্ট</button><button onclick="show('sources')">💰 আয়ের উৎস</button><button onclick="show('holidays')">📅 ছুটি</button><button onclick="show('budget')">🔔 অ্যালার্টঘর</button><button onclick="show('help')">🤖 এআই প্রযুক্তি হেল্প সেন্টার</button><button onclick="show('searchhub')">🔎 আমার খোঁজ</button><button onclick="show('contacts')">👥 পরিচিতি</button><button onclick="show('tasks')">✅ কাজ ও রিমাইন্ডার</button><button onclick="backup()">ব্যাকআপ</button><button onclick="restore.click()">রিস্টোর</button>
 </nav>
 <div class="card" style="margin-bottom:14px;background:#eef6ff">
 <b>শুরু করুন:</b> “নতুন হিসাব” থেকে আয়/খরচ যোগ করুন। “স্মার্ট কমান্ড”-এ লিখে কমান্ড চালানো যাবে।
@@ -844,4 +844,49 @@ function checkRanaTaskReminders(){
  renderRanaTasks();
 }
 renderRanaTasks();checkRanaTaskReminders();setInterval(checkRanaTaskReminders,60000);
-</script>\n</body></html>
+</script>\n
+<style>
+#ranaWelcome{position:fixed;inset:0;z-index:100000;background:linear-gradient(145deg,#101d3b,#183b70 58%,#2876d8);color:#fff;display:none;align-items:center;justify-content:center;padding:18px;text-align:center}
+#ranaWelcome .rw-card{width:min(100%,560px);border:1px solid #ffffff35;background:#ffffff12;border-radius:26px;padding:28px 20px;box-shadow:0 20px 60px #0004}
+#ranaWelcome h1{font-size:34px;margin:12px 0 5px}
+#ranaWelcome .rw-clock{font-size:30px;font-weight:850;margin:16px 0 4px}
+#ranaWelcome .rw-date{color:#d9e9ff}
+#ranaWelcome .rw-holidays{margin:18px 0;padding:12px;border-radius:14px;background:#ffffff16;line-height:1.7;font-size:13px}
+#ranaWelcome button{background:#fff;color:#173b70;padding:13px 30px;font-size:16px}
+</style>
+<div id="ranaWelcome" role="dialog" aria-modal="true" aria-labelledby="ranaWelcomeTitle">
+ <div class="rw-card">
+  <div>বিসমিল্লাহির রাহমানির রাহিম</div>
+  <h1 id="ranaWelcomeTitle">🧾 রানা হিসাব</h1>
+  <div>দৈনন্দিন জীবনের সকল কিছু এক ব্যানারে</div>
+  <div class="rw-clock" id="ranaWelcomeClock">--:--:--</div>
+  <div class="rw-date" id="ranaWelcomeDate">তারিখ ও ক্যালেন্ডার লোড হচ্ছে…</div>
+  <div class="rw-holidays" id="ranaWelcomeHolidays">বিশেষ দিন ও আপনার সংরক্ষিত ছুটি</div>
+  <button type="button" onclick="startRanaApp()">শুরু করুন</button>
+  <div style="font-size:11px;opacity:.75;margin-top:14px">সময় ও তারিখ ডিভাইস থেকে নেওয়া হচ্ছে। ছুটির তালিকায় নিজে যোগ করা তথ্য দেখানো হবে।</div>
+ </div>
+</div>
+<script>
+(function(){
+ const el=id=>document.getElementById(id);
+ function updateWelcomeClock(){
+  const now=new Date();
+  if(el('ranaWelcomeClock'))el('ranaWelcomeClock').textContent=now.toLocaleTimeString('bn-BD',{hour12:true});
+  if(el('ranaWelcomeDate'))el('ranaWelcomeDate').textContent=now.toLocaleDateString('bn-BD',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+ }
+ function renderWelcomeHolidays(){
+  const now=new Date();now.setHours(0,0,0,0);
+  let saved=[];try{saved=JSON.parse(localStorage.getItem('ranaHolidays')||'[]')}catch(e){}
+  const upcoming=(Array.isArray(saved)?saved:[]).filter(x=>x&&x.date&&new Date(x.date+'T00:00:00')>=now).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+  const lines=upcoming.map(x=>new Date(x.date+'T00:00:00').toLocaleDateString('bn-BD',{day:'numeric',month:'long'})+' — '+String(x.name||'বিশেষ দিন'));
+  if(el('ranaWelcomeHolidays'))el('ranaWelcomeHolidays').textContent='📅 আপনার সংরক্ষিত আসন্ন ছুটি: '+(lines.join(' • ')||'এখনো কোনো ছুটি যোগ করা হয়নি।');
+ }
+ window.startRanaApp=function(){localStorage.setItem('ranaWelcomeSeen','1');el('ranaWelcome').style.display='none';};
+ window.addEventListener('DOMContentLoaded',function(){
+  updateWelcomeClock();renderWelcomeHolidays();setInterval(updateWelcomeClock,1000);
+  if(!localStorage.getItem('ranaWelcomeSeen'))el('ranaWelcome').style.display='flex';
+ });
+})();
+</script>
+
+</body></html>
