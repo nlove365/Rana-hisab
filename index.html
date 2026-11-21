@@ -149,8 +149,12 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <section id="tasks" class="hidden"><div class="card"><h2>✅ কাজের তালিকা ও রিমাইন্ডার</h2><p class="hint">কাজ ও সময়সীমা এই ফোনে সংরক্ষিত থাকবে। নির্ধারিত সময়ের সতর্কতা অ্যাপ খোলা থাকলে দেখাবে; ব্যাকগ্রাউন্ডে/বন্ধ অবস্থায় নির্ভরযোগ্য নোটিফিকেশনের জন্য নেটিভ অ্যান্ড্রয়েড নোটিফিকেশন সংযোগ প্রয়োজন।</p><label>কাজের নাম *</label><input id="taskTitle" maxlength="120" placeholder="যেমন: সরবরাহকারীর বিল পরিশোধ"><label>বিস্তারিত</label><textarea id="taskNote" rows="2" placeholder="কাজের নোট"></textarea><div class="row"><div><label>শেষ সময় / রিমাইন্ডার</label><input id="taskDue" type="datetime-local"></div><div><label>অগ্রাধিকার</label><select id="taskPriority"><option value="normal">সাধারণ</option><option value="high">জরুরি</option></select></div></div><p><button class="primary" onclick="addRanaTask()">কাজ সংরক্ষণ</button><button onclick="requestTaskNotification()">নোটিফিকেশন অনুমতি</button></p><div id="taskNotice" aria-live="polite"></div><div id="taskList"></div></div></section><input id="restore" type="file" accept=".json" hidden onchange="restoreData(event)">
 </div>
 <script>
-let tx=JSON.parse(localStorage.getItem('hisabPro')||'[]');
-let products=JSON.parse(localStorage.getItem('hisabProducts')||'[]');
+function ranaReadJSON(key,fallback){
+  try{const raw=localStorage.getItem(key);if(raw===null||raw==='')return fallback;return JSON.parse(raw);}
+  catch(error){window.ranaStorageWarnings=window.ranaStorageWarnings||[];window.ranaStorageWarnings.push({key,message:String(error&&error.message||error),at:new Date().toISOString()});return fallback;}
+}
+let tx=ranaReadJSON('hisabPro',[]);
+let products=ranaReadJSON('hisabProducts',[]);
 const units=['মুঠো','টি','কেজি','গ্রাম','লিটার','মিলিলিটার','প্যাকেট','বস্তা','কার্টন','ডজন','মিটার','ফুট','জোড়া','বোতল','বক্স','সেট','রোল','জোড়া','ক্যান','গ্যালন','অন্যান্য'];
 const categories=['মুদিপণ্য','চাল-ডাল-শস্য','মসলা','তেল-ঘি','তরল খাবার','শুকনো খাবার','ফল ও সবজি','মাছ ও মাংস','দুধ ও দুগ্ধজাত','বেকারি ও মিষ্টি','পানীয়','পোশাকপণ্য','জুতা ও ব্যাগ','কসমেটিকস','পরিচ্ছন্নতা ও গৃহস্থালি','রান্নাবান্না ও কিচেন','স্টেশনারি','ইলেকট্রনিক্স','হার্ডওয়্যার ও নির্মাণ','কৃষি ও বাগান','ঔষধ ও স্বাস্থ্যসামগ্রী','শিশু ও খেলনা','মুদি ও প্যাকেটজাত খাবার','চাল ও চালজাত পণ্য','ডাল ও শিমজাতীয়','মসলা ও রান্নার উপকরণ','মাছের পণ্য ও সামুদ্রিক খাবার','মাংস ও ডিম','ফল','সবজি ও শাক','পোশাক ও ফ্যাশন','শাড়ি ও নারীদের পোশাক','জুতা ও চামড়াজাত পণ্য','কসমেটিকস ও ব্যক্তিগত পরিচর্যা','পরিষ্কার-পরিচ্ছন্নতা','রান্নাঘরের সরঞ্জাম','ঘর ও আসবাবপত্র','স্টেশনারি ও অফিস সামগ্রী','মোবাইল ও কম্পিউটার সামগ্রী','ইলেকট্রিক ও গৃহস্থালি যন্ত্র','হার্ডওয়্যার ও নির্মাণসামগ্রী','কৃষি ও পশুপালন','শিশু ও মাতৃসামগ্রী','খেলাধুলা ও বিনোদন','স্বাস্থ্য ও চিকিৎসা সরঞ্জাম','গাড়ি ও মোটরসাইকেল সামগ্রী','প্যাকেজিং ও দোকান সামগ্রী','ধর্মীয় ও উপহার সামগ্রী','পানীয় ও আইসক্রিম','হিমায়িত ও প্রস্তুত খাবার','মিষ্টি ও স্ন্যাকস','পোষা প্রাণী ও অ্যাকুরিয়াম','সেলাই ও কারুশিল্প','বই ও প্রকাশনা','নিরাপত্তা ও কর্মসামগ্রী','অন্যান্য'];
 const catalog={
@@ -426,9 +430,9 @@ function runGlobalSearch(){
 }
 
 // --- Income sources, holiday calendar and expense alerts ---
-let incomeSources=JSON.parse(localStorage.getItem('ranaIncomeSources')||'null')||['পণ্য বিক্রি','সার্ভিস চার্জ','কমিশন','ভাড়া','অন্যান্য আয়'];
-let businessHolidays=JSON.parse(localStorage.getItem('ranaHolidays')||'[]');
-let expenseBudget=JSON.parse(localStorage.getItem('ranaExpenseBudget')||'{"daily":0,"monthly":0}');
+let incomeSources=ranaReadJSON('ranaIncomeSources',null)||['পণ্য বিক্রি','সার্ভিস চার্জ','কমিশন','ভাড়া','অন্যান্য আয়'];
+let businessHolidays=ranaReadJSON('ranaHolidays',[]);
+let expenseBudget=ranaReadJSON('ranaExpenseBudget',{daily:0,monthly:0});
 const fixedHolidays=[['আন্তর্জাতিক মাতৃভাষা দিবস','02-21'],['স্বাধীনতা ও জাতীয় দিবস','03-26'],['বাংলা নববর্ষ','04-14'],['মে দিবস','05-01'],['বিজয় দিবস','12-16'],['বড়দিন','12-25']];
 function addIncomeSource(){const n=document.getElementById('sourceName').value.trim();if(!n)return alert('উৎসের নাম লিখুন');if(incomeSources.some(x=>x.toLowerCase()===n.toLowerCase()))return alert('এই উৎস আগে থেকেই আছে');incomeSources.push(n);localStorage.setItem('ranaIncomeSources',JSON.stringify(incomeSources));document.getElementById('sourceName').value='';renderSources();fillIncomeSourceSelect();}
 function fillIncomeSourceSelect(){const el=document.getElementById('incomeSource');if(el){const v=el.value;el.innerHTML=incomeSources.map(x=>'<option>'+esc(x)+'</option>').join('');if(incomeSources.includes(v))el.value=v;}}
@@ -450,7 +454,7 @@ renderBudgetStatus();
 
 
 /* Sales returns, FIFO purchase-cost layers and legacy stock audit. */
-let ranaCostLayers=JSON.parse(localStorage.getItem('ranaCostLayers')||'[]');
+let ranaCostLayers=ranaReadJSON('ranaCostLayers',[]);
 if(!Array.isArray(ranaCostLayers))ranaCostLayers=[];
 function saveCostLayers(){localStorage.setItem('ranaCostLayers',JSON.stringify(ranaCostLayers));}
 function addCostLayer(product,qty,unitCost,source,txId){
@@ -614,7 +618,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   সর্বস্বত্ব সংরক্ষিত।
 </footer>
 <script>
-let ranaContacts=JSON.parse(localStorage.getItem('ranaContacts')||'[]');
+let ranaContacts=ranaReadJSON('ranaContacts',[]);
 function saveContactsStore(){localStorage.setItem('ranaContacts',JSON.stringify(ranaContacts));}
 function clearContactForm(){['contactName','contactPhone','contactAddress','contactNote','contactEditId'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});document.getElementById('contactType').value='ক্রেতা';}
 function saveContact(){var name=document.getElementById('contactName').value.trim(),phone=document.getElementById('contactPhone').value.trim(),address=document.getElementById('contactAddress').value.trim(),note=document.getElementById('contactNote').value.trim(),type=document.getElementById('contactType').value,id=document.getElementById('contactEditId').value;if(!name){alert('নাম লিখুন');return;}var duplicate=ranaContacts.find(function(x){return x.active!==false&&x.name.toLowerCase()===name.toLowerCase()&&x.phone===phone&&x.id!==id;});if(duplicate&&!confirm('একই নাম ও ফোনের তথ্য রয়েছে, তবুও সংরক্ষণ করবেন?'))return;var now=new Date().toISOString();if(id){var old=ranaContacts.find(function(x){return x.id===id;});if(!old)return;Object.assign(old,{name:name,phone:phone,address:address,note:note,type:type,updatedAt:now});}else ranaContacts.push({id:'c'+Date.now(),name:name,phone:phone,address:address,note:note,type:type,active:true,createdAt:now,updatedAt:now});saveContactsStore();clearContactForm();renderContacts();alert('পরিচিতির তথ্য সংরক্ষণ হয়েছে।');}
@@ -630,7 +634,7 @@ var priorGlobalSearch=runGlobalSearch;runGlobalSearch=function(){priorGlobalSear
 var oldShowForContacts=show;show=function(id){if(id==='contacts'){['dash','add','list','cmd','products','photo','pos','reports','payments','sources','holidays','budget','searchhub','help','contacts'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.toggle('hidden',k!==id);});renderContacts();return;}oldShowForContacts(id);};
 
 /* --- Auditable inventory ledger v1 --- */
-var stockMovements=JSON.parse(localStorage.getItem('ranaStockMovements')||'[]');
+var stockMovements=ranaReadJSON('ranaStockMovements',[]);
 if(!Array.isArray(stockMovements))stockMovements=[];
 function stockUnitFactor(unit){
  const u=String(unit||'').trim();
@@ -809,7 +813,7 @@ restoreData=function(e){
 
 
 /* Local task manager and foreground reminders. */
-let ranaTasks=JSON.parse(localStorage.getItem('ranaTasks')||'[]');
+let ranaTasks=ranaReadJSON('ranaTasks',[]);
 if(!Array.isArray(ranaTasks))ranaTasks=[];
 function saveRanaTasks(){localStorage.setItem('ranaTasks',JSON.stringify(ranaTasks));}
 function addRanaTask(){
@@ -876,7 +880,7 @@ renderRanaTasks();checkRanaTaskReminders();setInterval(checkRanaTaskReminders,60
  }
  function renderWelcomeHolidays(){
   const now=new Date();now.setHours(0,0,0,0);
-  let saved=[];try{saved=JSON.parse(localStorage.getItem('ranaHolidays')||'[]')}catch(e){}
+  let saved=[];try{saved=ranaReadJSON('ranaHolidays',[])}catch(e){}
   const upcoming=(Array.isArray(saved)?saved:[]).filter(x=>x&&x.date&&new Date(x.date+'T00:00:00')>=now).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
   const lines=upcoming.map(x=>new Date(x.date+'T00:00:00').toLocaleDateString('bn-BD',{day:'numeric',month:'long'})+' — '+String(x.name||'বিশেষ দিন'));
   if(el('ranaWelcomeHolidays'))el('ranaWelcomeHolidays').textContent='📅 আপনার সংরক্ষিত আসন্ন ছুটি: '+(lines.join(' • ')||'এখনো কোনো ছুটি যোগ করা হয়নি।');
