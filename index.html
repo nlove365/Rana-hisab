@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#183b70">
-<meta name="app-build" content="2026-11-21-rana-stock-validation-2">
+<meta name="app-build" content="2026-11-21-rana-sales-return-fifo-audit-1">
 <meta name="description" content="বাংলা ভাষায় সহজ আয়-ব্যয় ও পণ্য হিসাব রাখুন।">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.jpg" type="image/jpeg">
@@ -136,6 +136,8 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:11px;bor
 <div class="row"><div><label>একক মূল্য (৳)</label><input id="posPrice" type="number" step="any" placeholder="প্রতি এককের দাম"></div><div><label>ডিসকাউন্ট (৳)</label><input id="posDiscount" type="number" step="any" value="0"></div></div>
 <p><button class="primary" onclick="cartAdd()">কার্টে যোগ করুন</button></p><div id="cartView"></div><div class="row"><div><label>কাস্টমারের নাম</label><input id="posParty"></div><div><label>প্রাপ্ত টাকা (৳)</label><input id="posPaid" type="number" value="0"></div></div>
 <p><button class="primary" onclick="checkout()">বিক্রি সম্পন্ন / রসিদ</button></p><div id="receipt"></div></div></section>
+
+<section id="returns" class="hidden"><div class="card"><h2>↩️ বিক্রয় ফেরত</h2><p class="hint">আগের বিক্রয় নির্বাচন করে ফেরত পণ্যের পরিমাণ দিন। একই বিক্রয়ের মোট ফেরত বিক্রিত পরিমাণের বেশি হতে পারবে না।</p><label>মূল বিক্রয়</label><select id="returnSale" onchange="previewSaleReturn()"><option value="">বিক্রয় নির্বাচন করুন</option></select><div class="row"><div><label>ফেরত পরিমাণ</label><input id="returnQty" type="number" min="0.0001" step="any" value="1" oninput="previewSaleReturn()"></div><div><label>ফেরত টাকা (৳)</label><input id="returnAmount" type="number" min="0" step="any"></div></div><label>কারণ / নোট</label><input id="returnNote" placeholder="যেমন পণ্য নষ্ট / ভুল পণ্য"><p><button class="primary" onclick="recordSalesReturn()">ফেরত সংরক্ষণ ও স্টক যোগ</button> <button onclick="refreshSalesReturnOptions()">বিক্রয় তালিকা হালনাগাদ</button></p><div id="returnPreview" class="hint"></div></div><div class="card"><h3>🧾 স্টক ও পুরোনো হিসাব যাচাই</h3><p class="hint">পুরোনো লেনদেনে স্টক ইতিহাস না থাকলে বর্তমান স্টক অনুমান করে বদলানো হবে না। আগে তালিকা ও সতর্কতা দেখুন।</p><button onclick="runInventoryAudit()">স্টক যাচাই চালান</button><div id="inventoryAudit"></div></div></section>
 <section id="reports" class="hidden"><div class="card"><h2>📊 তারিখভিত্তিক রিপোর্ট</h2><div class="row"><div><label>শুরুর তারিখ</label><input id="reportFrom" type="date"></div><div><label>শেষ তারিখ</label><input id="reportTo" type="date"></div></div><p><button class="primary" onclick="makeReport()">রিপোর্ট দেখুন</button></p><div id="reportResult"></div></div></section>
 <section id="searchhub" class="hidden"><div class="card"><h2>🔎 আমার খোঁজ</h2><p class="hint">পণ্য, ক্রেতা, বিক্রেতা, লেনদেন, আয়ের উৎস ও ছুটির তথ্য এক জায়গা থেকে খুঁজুন।</p><div class="row"><div style="flex:1"><label>কী খুঁজছেন?</label><input id="globalSearchInput" placeholder="যেমন: চাল, করিম, ৫০০০ টাকা, কমিশন..." oninput="runGlobalSearch()"></div><div style="display:flex;align-items:end;gap:7px"><button class="primary" onclick="runGlobalSearch()">আমার খোঁজ</button></div></div><div id="globalSearchResults" aria-live="polite"><p class="hint">সার্চ বক্সে লিখে রানা হিসাবের সংরক্ষিত তথ্য খুঁজুন।</p></div></div></section>
 <section id="payments" class="hidden"><div class="card"><h2>💳 বাকি আদায় / পরিশোধ</h2><div class="row"><div><label>ব্যক্তি</label><input id="payParty" list="ranaContactNames" placeholder="কাস্টমার/সাপ্লায়ার"><datalist id="ranaContactNames"></datalist></div><div><label>টাকার পরিমাণ</label><input id="payAmount" type="number"></div></div><div class="row"><div><label>ধরন</label><select id="payType"><option value="receive">কাস্টমারের কাছ থেকে বাকি আদায়</option><option value="pay">সাপ্লায়ারকে বাকি পরিশোধ</option><option value="creditSale">কাস্টমারকে বাকি বিক্রি</option><option value="creditPurchase">সাপ্লায়ারের কাছ থেকে বাকি ক্রয়</option></select></div><div><label>বিবরণ</label><input id="payNote"></div></div><p><button class="primary" onclick="recordPayment()">পেমেন্ট সংরক্ষণ</button></p><div id="paymentHistory"></div></div></section>
@@ -596,6 +598,128 @@ fillIncomeSourceSelect();
 render();
 renderBudgetStatus();
 
+
+/* Sales returns, FIFO purchase-cost layers and legacy stock audit. */
+let ranaCostLayers=JSON.parse(localStorage.getItem('ranaCostLayers')||'[]');
+if(!Array.isArray(ranaCostLayers))ranaCostLayers=[];
+function saveCostLayers(){localStorage.setItem('ranaCostLayers',JSON.stringify(ranaCostLayers));}
+function addCostLayer(product,qty,unitCost,source,txId){
+ const q=Number(qty),cost=Number(unitCost);
+ if(!product||!Number.isFinite(q)||q<=0||!Number.isFinite(cost)||cost<0)return;
+ ranaCostLayers.push({id:'cl-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),product:product.name,unit:product.unit||'টি',qty:q,remaining:q,unitCost:cost,source,txId:txId??null,date:new Date().toISOString()});
+ saveCostLayers();
+}
+function consumeCostLayers(product,qty){
+ let remaining=Number(qty),allocations=[];
+ for(const layer of ranaCostLayers.filter(x=>x.product===product.name&&Number(x.remaining)>0).sort((a,b)=>String(a.date).localeCompare(String(b.date)))){
+  if(remaining<=1e-9)break;
+  const take=Math.min(remaining,Number(layer.remaining)),cost=Number(layer.unitCost)||0;
+  layer.remaining=Number((Number(layer.remaining)-take).toFixed(6));remaining=Number((remaining-take).toFixed(6));
+  allocations.push({qty:take,unitCost:cost,layerId:layer.id});
+ }
+ saveCostLayers();
+ return {allocations,unknownQty:Math.max(0,remaining)};
+}
+function restoreCostAllocations(product,allocations){
+ (allocations||[]).forEach(a=>{if(Number(a.qty)>0)addCostLayer(product,Number(a.qty),Number(a.unitCost)||0,'sales-return',null);});
+}
+const ranaOriginalAddTx=addTx;
+addTx=function(t=null,a=null,p='',n='',prod='',q='',u=''){
+ const before=tx.length;
+ ranaOriginalAddTx(t,a,p,n,prod,q,u);
+ if(tx.length===before)return;
+ const x=tx[0];if(!x||x.voided||x.type!=='expense'||!x.product||!Number(x.qty)||Number(x.qty)<=0)return;
+ const product=products.find(v=>String(v.name).toLowerCase()===String(x.product).toLowerCase());
+ if(!product)return;
+ const converted=convertStockQty(x.qty,x.unit||product.unit,product.unit);
+ if(converted===null)return;
+ addCostLayer(product,converted,Number(x.amount)/converted,'purchase-transaction',x.id);
+};
+const ranaOriginalAdjustStock=adjustStock;
+adjustStock=function(){
+ const i=Number(document.getElementById('stockProduct').value),p=products[i],q=Number(document.getElementById('stockQty').value);
+ if(!p||!Number.isFinite(q)||q<=0)return ranaOriginalAdjustStock();
+ const oldLength=stockMovements.length;
+ ranaOriginalAdjustStock();
+ if(stockMovements.length>oldLength&&Number(p.buyPrice)>0)addCostLayer(p,q,Number(p.buyPrice),'opening-or-manual-stock',stockMovements[stockMovements.length-1].id);
+};
+const ranaOriginalCheckout=checkout;
+checkout=function(){
+ const before=new Set(tx.map(x=>String(x.id)));
+ ranaOriginalCheckout();
+ tx.filter(x=>!before.has(String(x.id))&&x.posBatchId&&x.product&&Number(x.qty)>0).forEach(x=>{
+  const p=products.find(v=>v.name===x.product);if(!p||!p.stockTracked)return;
+  const q=convertStockQty(x.qty,x.unit||p.unit,p.unit);if(q===null)return;
+  const consumed=consumeCostLayers(p,q);x.costAllocations=consumed.allocations;x.costUnknownQty=consumed.unknownQty;
+ });
+ save();
+};
+function refreshSalesReturnOptions(){
+ const el=document.getElementById('returnSale');if(!el)return;
+ const sales=activeTx().filter(x=>x.type==='income'&&x.product&&Number(x.qty)>0&&!x.isSalesReturn);
+ el.innerHTML='<option value="">বিক্রয় নির্বাচন করুন</option>'+sales.map(x=>'<option value="'+esc(String(x.id))+'">'+esc(x.product)+' · '+esc(x.party||'সাধারণ')+' · '+new Date(x.date).toLocaleDateString('bn-BD')+' · '+Number(x.qty)+' '+esc(x.unit||'')+'</option>').join('');
+ previewSaleReturn();
+}
+function previewSaleReturn(){
+ const id=document.getElementById('returnSale')?.value,sale=tx.find(x=>String(x.id)===String(id)),out=document.getElementById('returnPreview');if(!sale||!out)return;
+ const q=Number(document.getElementById('returnQty')?.value),returned=tx.filter(x=>x.isSalesReturn&&String(x.linkedSaleTxId)===String(sale.id)&&!x.voided).reduce((n,x)=>n+Number(x.qty||0),0),left=Math.max(0,Number(sale.qty)-returned);
+ const amount=Number(sale.amount)-Number(sale.discountShare||0),suggest=q>0?amount*q/Number(sale.qty):0;
+ const amountEl=document.getElementById('returnAmount');if(amountEl&&!amountEl.dataset.edited)amountEl.value=suggest.toFixed(2);
+ out.textContent='বিক্রিত: '+sale.qty+' '+(sale.unit||'')+' · আগে ফেরত: '+returned+' · ফেরত দেওয়া যাবে: '+left+' '+(sale.unit||'')+' · আনুমানিক ফেরত টাকা: '+money(suggest);
+}
+document.getElementById('returnAmount')?.addEventListener('input',e=>{e.target.dataset.edited='1';});
+function recordSalesReturn(){
+ const id=document.getElementById('returnSale').value,sale=tx.find(x=>String(x.id)===String(id)),qty=Number(document.getElementById('returnQty').value),amount=Number(document.getElementById('returnAmount').value);
+ if(!sale||sale.voided||sale.type!=='income')return alert('মূল বিক্রয় নির্বাচন করুন।');
+ if(!Number.isFinite(qty)||qty<=0||!Number.isFinite(amount)||amount<0)return alert('ফেরত পরিমাণ ও টাকা সঠিকভাবে দিন।');
+ const returned=tx.filter(x=>x.isSalesReturn&&String(x.linkedSaleTxId)===String(sale.id)&&!x.voided).reduce((n,x)=>n+Number(x.qty||0),0);
+ if(returned+qty>Number(sale.qty)+1e-8)return alert('মোট ফেরত বিক্রিত পরিমাণের বেশি হতে পারবে না।');
+ const p=products.find(x=>x.name===sale.product),baseQty=p?convertStockQty(qty,sale.unit||p.unit,p.unit):null;
+ if(p?.stockTracked&&baseQty===null)return alert('ফেরত পণ্যের একক মিলছে না।');
+ const now=new Date().toISOString(),idNew='return-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+ const saleCost=Array.isArray(sale.costAllocations)?sale.costAllocations:[],ratio=qty/Number(sale.qty),returnCosts=saleCost.map(a=>({qty:Number((Number(a.qty)*ratio).toFixed(6)),unitCost:a.unitCost}));
+ const entry={id:idNew,date:now,type:'expense',amount,party:sale.party||'',product:sale.product,qty,unit:sale.unit||'টি',note:'বিক্রয় ফেরত: '+(document.getElementById('returnNote').value.trim()||'কারণ উল্লেখ নেই'),isSalesReturn:true,linkedSaleTxId:sale.id,returnCostAllocations:returnCosts,voided:false,createdAt:now,updatedAt:now};
+ tx.unshift(entry);
+ if(p?.stockTracked){const before=Number(p.stock||0),after=Number((before+baseQty).toFixed(6));p.stock=after;stockMovements.push({id:'sm-ret-'+Date.now(),txId:idNew,product:p.name,unit:p.unit,qty:baseQty,delta:baseQty,before,after,source:'sales-return',date:now,reversed:false});}
+ if(p&&returnCosts.length)restoreCostAllocations(p,returnCosts);
+ save();renderStockHistory();document.getElementById('returnNote').value='';document.getElementById('returnAmount').dataset.edited='';refreshSalesReturnOptions();alert('বিক্রয় ফেরত সংরক্ষণ হয়েছে।');
+}
+function runInventoryAudit(){
+ const out=document.getElementById('inventoryAudit');if(!out)return;
+ const legacy=activeTx().filter(x=>x.product&&Number(x.qty)>0&&products.some(p=>p.name===x.product&&p.stockTracked)&&!stockMovements.some(m=>String(m.txId)===String(x.id)&&m.source!=='void-reversal'));
+ const summaries=products.filter(p=>p.stockTracked).map(p=>{const rows=stockMovements.filter(m=>m.product===p.name),delta=rows.reduce((n,m)=>n+Number(m.delta||0),0);return {p,rows:rows.length,delta};});
+ out.innerHTML='<p><b>স্টক-ট্র্যাকিং পণ্য:</b> '+summaries.length+' · <b>লেনদেনভিত্তিক পুরোনো/অনুপস্থিত মুভমেন্ট:</b> '+legacy.length+'</p>'+(legacy.length?'<p class="danger">নিচের পুরোনো লেনদেনগুলোর সঙ্গে স্টক মুভমেন্ট পাওয়া যায়নি। প্রারম্ভিক স্টক ও আগের মজুত না জেনে স্বয়ংক্রিয় সমন্বয় নিরাপদ নয়।</p><ul>'+legacy.slice(0,50).map(x=>'<li>'+esc(x.product)+' · '+esc(x.qty+' '+(x.unit||''))+' · '+new Date(x.date).toLocaleDateString('bn-BD')+'</li>').join('')+'</ul>':'<p class="ok">কোনো অনুপস্থিত লেনদেন মুভমেন্ট শনাক্ত হয়নি।</p>')+'<h4>পণ্যভিত্তিক বর্তমান সারাংশ</h4><ul>'+summaries.map(s=>'<li>'+esc(s.p.name)+': বর্তমান '+Number(s.p.stock||0)+' '+esc(s.p.unit||'')+' · ইতিহাসের মোট পরিবর্তন '+s.delta.toFixed(3)+' · রেকর্ড '+s.rows+'</li>').join('')+'</ul>';
+}
+const ranaOriginalShowForReturns=show;
+show=function(id){ranaOriginalShowForReturns(id);if(id==='returns')refreshSalesReturnOptions();};
+const ranaOriginalMakeReport=makeReport;
+makeReport=function(){
+ ranaOriginalMakeReport();
+ const rows=activeTx().filter(x=>{const from=reportFrom.value?new Date(reportFrom.value+'T00:00:00'):new Date('2000-01-01T00:00:00'),to=reportTo.value?new Date(reportTo.value+'T23:59:59.999'):new Date('2100-01-01T23:59:59.999'),d=new Date(x.date);return d>=from&&d<=to;});
+ const returns=rows.filter(x=>x.isSalesReturn),sales=rows.filter(x=>x.type==='income'&&x.product&&Number(x.qty)>0);
+ const returnRevenue=returns.reduce((n,x)=>n+Number(x.amount||0),0);
+ const salesRevenue=sales.reduce((n,x)=>n+Math.max(0,Number(x.amount||0)-Number(x.discountShare||0)),0);
+ let cost=0,unknown=0;
+ sales.forEach(x=>{if(Array.isArray(x.costAllocations)){cost+=x.costAllocations.reduce((n,a)=>n+Number(a.qty||0)*Number(a.unitCost||0),0);unknown+=Number(x.costUnknownQty||0);}else{const p=products.find(v=>v.name===x.product),q=p?convertStockQty(x.qty,x.unit||p.unit,p.unit):null;if(q!==null&&Number(p.buyPrice)>0)cost+=q*Number(p.buyPrice);else unknown++;}});
+ const returnedCost=returns.reduce((n,x)=>n+(Array.isArray(x.returnCostAllocations)?x.returnCostAllocations.reduce((a,v)=>a+Number(v.qty||0)*Number(v.unitCost||0),0):0),0);
+ const netRevenue=salesRevenue-returnRevenue,netCost=Math.max(0,cost-returnedCost),profit=netRevenue-netCost;
+ const box=document.getElementById('reportResult');if(box)box.innerHTML+='<hr><h3>বিক্রয় ফেরত ও FIFO ক্রয়মূল্য সমন্বয়</h3><p>বিক্রয় ফেরত: '+money(returnRevenue)+' · ফেরত পণ্যের আনুমানিক/রেকর্ডকৃত ক্রয়মূল্য: '+money(returnedCost)+'</p><p>ফেরত বাদে পণ্য বিক্রির আয়: '+money(netRevenue)+'</p><p>FIFO ক্রয়মূল্য/পুরোনো পণ্যের আনুমানিক খরচ: '+money(netCost)+'</p><p><b>ফেরত সমন্বয়ের পর আনুমানিক মুনাফা: '+money(profit)+'</b></p><p>ক্রয়মূল্য অনুপস্থিত বিক্রয় লাইন/পরিমাণ: '+unknown+'</p><p class="small">নতুন ক্রয় ও স্টক যোগের পর থেকে FIFO স্তর জমা হয়। আগের বিক্রয়/ক্রয়ের জন্য স্তর না থাকলে বর্তমান ক্রয়মূল্য দিয়ে আনুমানিক করা হতে পারে; এটি অডিটেড হিসাব নয়।</p>';
+};
+const ranaOriginalBackupV6=backup;
+backup=function(){
+ const oldSet=saveCostLayers;saveCostLayers=()=>{};
+ const panel=document.getElementById('backupFallback');if(panel)panel.remove();
+ const readStored=(key,fallback)=>{try{const v=JSON.parse(localStorage.getItem(key));return v===null?fallback:v}catch{return fallback}};
+ const data={schemaVersion:6,exportedAt:new Date().toISOString(),transactions:tx,products:products,payments:payments,tasks:ranaTasks,stockMovements,costLayers:ranaCostLayers,incomeSources:readStored('ranaIncomeSources',[]),holidays:readStored('ranaHolidays',[]),expenseBudget:readStored('ranaExpenseBudget',{daily:0,monthly:0}),contacts:readStored('ranaContacts',[])};
+ const json=JSON.stringify(data,null,2),url=URL.createObjectURL(new Blob([json],{type:'application/json'})),fileName='rana-hisab-backup-'+new Date().toISOString().slice(0,10)+'.json';
+ const p=document.createElement('div');p.id='backupFallback';p.style='position:fixed;inset:0;z-index:99999;background:#0009;display:flex;align-items:center;justify-content:center;padding:14px';
+ p.innerHTML='<div style="background:white;color:#172033;border-radius:14px;padding:16px;width:100%;max-width:520px;max-height:90vh;overflow:auto"><h3>সম্পূর্ণ ব্যাকআপ তৈরি হয়েছে</h3><p>লেনদেন, পণ্য, পেমেন্ট, স্টক ইতিহাস, FIFO ক্রয়মূল্য স্তর, কাজ, পরিচিতি, ছুটি ও বাজেট অন্তর্ভুক্ত।</p><button id="backupDownload">JSON ফাইল ডাউনলোড</button> <button id="backupCopy">সব তথ্য কপি</button><textarea id="backupJsonText" readonly style="width:100%;height:180px;margin-top:10px"></textarea><p id="backupMsg">ফাইলটি নিরাপদে রাখুন।</p><button id="backupClose">বন্ধ করুন</button></div>';
+ document.body.appendChild(p);document.getElementById('backupJsonText').value=json;
+ document.getElementById('backupDownload').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=fileName;a.click();document.getElementById('backupMsg').textContent='Downloads ফোল্ডারে ফাইলটি যাচাই করুন।'};
+ document.getElementById('backupCopy').onclick=async()=>{try{await navigator.clipboard.writeText(json);document.getElementById('backupMsg').textContent='কপি হয়েছে।'}catch(e){const t=document.getElementById('backupJsonText');t.focus();t.select();document.getElementById('backupMsg').textContent='সব নির্বাচন করে কপি করুন।'}};
+ document.getElementById('backupClose').onclick=()=>{p.remove();URL.revokeObjectURL(url);};
+};
+
 </script>
 <div id="ranaUpdateNotice" style="display:none;position:fixed;z-index:99999;left:12px;right:12px;bottom:12px;background:#173b70;color:white;padding:14px;border-radius:14px;box-shadow:0 8px 30px #0004"><strong>রানা হিসাবের নতুন সংস্করণ প্রস্তুত</strong><p style="margin:6px 0 10px;font-size:13px">আপডেট চালু করতে নিচের বোতাম চাপুন। আপনার সংরক্ষিত হিসাব ফোনেই থাকবে।</p><button id="ranaUpdateNow" style="background:white;color:#173b70">এখন আপডেট করুন</button><button id="ranaUpdateLater" style="background:#ffffff22;color:white">পরে</button></div>
 <script>
@@ -801,13 +925,13 @@ restoreData=function(e){
    if(!confirm('বর্তমান তথ্য প্রতিস্থাপন করবেন? আগে বর্তমান ব্যাকআপ নিন।')){e.target.value='';return;}
    tx=nextTx;products=nextProducts;payments=nextPayments;
    if(!legacy){
-    stockMovements=Array.isArray(d.stockMovements)?d.stockMovements:[];
+    stockMovements=Array.isArray(d.stockMovements)?d.stockMovements:[];ranaCostLayers=Array.isArray(d.costLayers)?d.costLayers:[];saveCostLayers();
     ranaTasks=Array.isArray(d.tasks)?d.tasks:[];localStorage.setItem('ranaTasks',JSON.stringify(ranaTasks));
     if(Array.isArray(d.incomeSources)){incomeSources=d.incomeSources;localStorage.setItem('ranaIncomeSources',JSON.stringify(incomeSources));}
     if(Array.isArray(d.holidays)){businessHolidays=d.holidays;localStorage.setItem('ranaHolidays',JSON.stringify(businessHolidays));}
     if(d.expenseBudget&&typeof d.expenseBudget==='object'&&!Array.isArray(d.expenseBudget)){expenseBudget={daily:Number(d.expenseBudget.daily)||0,monthly:Number(d.expenseBudget.monthly)||0};localStorage.setItem('ranaExpenseBudget',JSON.stringify(expenseBudget));}
     if(Array.isArray(d.contacts)){ranaContacts=d.contacts;localStorage.setItem('ranaContacts',JSON.stringify(ranaContacts));}
-   }else {stockMovements=[];ranaTasks=[];localStorage.setItem('ranaTasks','[]');}
+   }else {stockMovements=[];ranaCostLayers=[];saveCostLayers();ranaTasks=[];localStorage.setItem('ranaTasks','[]');}
    save();fillSelects();renderProducts();renderPayments();renderSources();renderHolidays();renderContacts();loadBudgetForm();renderBudgetStatus();renderStockHistory();
    alert('ব্যাকআপ রিস্টোর হয়েছে। স্টক ইতিহাসসহ তথ্য পুনরুদ্ধার করা হয়েছে।');
   }catch(err){alert('ব্যাকআপ ফাইলটি সঠিক নয়। কোনো তথ্য পরিবর্তন করা হয়নি।');}
