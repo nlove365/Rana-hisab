@@ -63,7 +63,7 @@ jobs:
           python3 - <<'PY'
           import pathlib, re, subprocess
           html = pathlib.Path("index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r"<script[^>]*>(.*?)</script\\s*>", html, re.I | re.S)
+          scripts = re.findall(r"<script[^>]*>(.*?)</script>", html, re.I | re.S)
           if not scripts:
               raise SystemExit("No inline JavaScript found")
           for i, source in enumerate(scripts):
