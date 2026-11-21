@@ -334,6 +334,7 @@ function renderDashboard(){
  const max=Math.max(1,...days.flatMap(d=>[d.inc,d.exp]));
  const bars=document.getElementById('dashBars');
  if(bars)bars.innerHTML=days.map(d=>'<div class="bar-day"><div class="bar-pair"><i class="bar in" title="আয় '+money(d.inc)+'" style="height:'+Math.max(3,d.inc/max*100)+'%"></i><i class="bar out" title="খরচ '+money(d.exp)+'" style="height:'+Math.max(3,d.exp/max*100)+'%"></i></div><small>'+d.label+'</small></div>').join('');
+ renderBudgetStatus();
 }
 function render(){
  fillSelects(); renderProducts();
