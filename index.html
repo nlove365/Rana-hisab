@@ -482,8 +482,9 @@ function makeReport(){
  const paymentsInRange=payments.filter(p=>!p.voided&&(()=>{const d=new Date(p.date);return !Number.isNaN(d.getTime())&&d>=from&&d<=to;})());
  const collected=sum(paymentsInRange.filter(p=>p.type==='receive'),p=>p.amount);
  const paid=sum(paymentsInRange.filter(p=>p.type==='pay'),p=>p.amount);
- const currentReceivable=Math.max(0,sum(payments.filter(p=>!p.voided&&p.type==='creditSale'),p=>p.amount)-sum(payments.filter(p=>!p.voided&&p.type==='receive'),p=>p.amount));
- const currentPayable=Math.max(0,sum(payments.filter(p=>!p.voided&&p.type==='creditPurchase'),p=>p.amount)-sum(payments.filter(p=>!p.voided&&p.type==='pay'),p=>p.amount));
+ const outstandingByParty=(saleType,settleType)=>{const ledger=new Map();payments.filter(p=>!p.voided).forEach(p=>{const key=String(p.party||'').trim().toLocaleLowerCase('bn-BD')||'__unknown__';if(!ledger.has(key))ledger.set(key,{due:0,settled:0});const row=ledger.get(key);if(p.type===saleType)row.due+=Number(p.amount)||0;if(p.type===settleType)row.settled+=Number(p.amount)||0;});return Array.from(ledger.values()).reduce((n,v)=>n+Math.max(0,v.due-v.settled),0);};
+ const currentReceivable=outstandingByParty('creditSale','receive');
+ const currentPayable=outstandingByParty('creditPurchase','pay');
  const daily=new Map(),monthly=new Map();
  rows.forEach(x=>{const d=new Date(x.date),key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),month=key.slice(0,7),bucket=x.type==='income'?'income':'expense';if(!daily.has(key))daily.set(key,{income:0,expense:0});if(!monthly.has(month))monthly.set(month,{income:0,expense:0});daily.get(key)[bucket]+=Number(x.amount)||0;monthly.get(month)[bucket]+=Number(x.amount)||0;});
  const dailyRows=Array.from(daily.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v])=>'<tr><td>'+k+'</td><td>'+money(v.income)+'</td><td>'+money(v.expense)+'</td><td>'+money(v.income-v.expense)+'</td></tr>').join('');
