@@ -160,7 +160,7 @@ jobs:
               print("PASS: bundled app logo")
               sw_path = find_asset("sw.js")
               sw = z.read(sw_path).decode("utf-8", "replace")
-              if "rana-hisab-v10-stock-ledger-1" not in sw:
+              if "rana-hisab-v11-task-reminders-1" not in sw:
                   raise SystemExit("APK verification failed: service worker cache version is outdated")
               print("PASS: service worker cache version")
           PY
