@@ -116,6 +116,8 @@ jobs:
                   "local date calculation": "dateKey=d=>" in html,
                   "POS discount validation": "ছাড় সাবটোটালের" in html,
                   "smart command confirmation": "function confirmCommand()" in html,
+                  "inventory stock tracking": "function adjustStock()" in html and "stockTracked" in html,
+                  "in-app update prompt": "ranaUpdateNotice" in html and "controllerchange" in html,
               }
               for label, ok in checks.items():
                   print(("PASS: " if ok else "FAIL: ") + label)
@@ -125,7 +127,7 @@ jobs:
               print("PASS: bundled app logo")
               sw_path = find_asset("sw.js")
               sw = z.read(sw_path).decode("utf-8", "replace")
-              if "rana-hisab-v5-rana-search-1" not in sw:
+              if "rana-hisab-v6-inventory-autoupdate-1" not in sw:
                   raise SystemExit("APK verification failed: service worker cache version is outdated")
               print("PASS: service worker cache version")
           PY
