@@ -470,7 +470,7 @@ function makeReport(){
  const productByName=new Map(products.map(p=>[String(p.name||'').trim().toLocaleLowerCase('bn-BD'),p]));
  let cogs=0,costKnown=0,costUnknown=0,productRevenue=0;
  sales.forEach(x=>{
-  productRevenue+=Number(x.amount)||0;
+  productRevenue+=Math.max(0,(Number(x.amount)||0)-(Number(x.discountShare)||0));
   const p=productByName.get(String(x.product).trim().toLocaleLowerCase('bn-BD'));
   const q=p?convertStockQty(x.qty,x.unit||p.unit,p.unit):null;
   const unitCost=Number(p?.buyPrice);
@@ -710,6 +710,7 @@ addTx=function(t=null,a=null,p='',n='',prod='',q='',u=''){
 };
 del=function(id){
  const x=tx.find(t=>String(t.id)===String(id));if(!x||x.voided)return;
+ if(x.posForTxId){const parentSale=tx.find(t=>String(t.id)===String(x.posForTxId));if(parentSale&&!parentSale.voided)return del(parentSale.id);}
  const linked=stockMovements.filter(m=>String(m.txId)===String(x.id)&&!m.reversed);
  for(const m of linked.slice().reverse()){
   const p=products.find(v=>v.name===m.product);if(!p)return alert('স্টক ফেরত দেওয়া যায়নি: পণ্য তালিকায় নেই। লেনদেন বাতিল করা হয়নি।');
@@ -723,7 +724,7 @@ del=function(id){
   m.reversed=true;m.reversedAt=new Date().toISOString();
   stockMovements.push({id:'sm-rev-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),txId:x.id,product:p.name,unit:m.unit,qty:m.qty,delta,before,after:p.stock,source:'void-reversal',date:new Date().toISOString(),reverses:m.id,reversed:false});
  }
- if(x.posForTxId){const discountEntry=tx.find(t=>String(t.id)===String(x.posForTxId)&&!t.voided);if(discountEntry){discountEntry.voided=true;discountEntry.voidedAt=new Date().toISOString();}}
+ const discountEntry=tx.find(t=>String(t.posForTxId)===String(x.id)&&!t.voided);if(discountEntry){discountEntry.voided=true;discountEntry.voidedAt=new Date().toISOString();}
  x.voided=true;x.voidedAt=new Date().toISOString();
  if(x.posBatchId){
   payments.filter(p=>!p.voided&&p.type==='creditSale'&&p.posBatchId===x.posBatchId).forEach(p=>{
