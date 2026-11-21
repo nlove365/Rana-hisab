@@ -707,19 +707,19 @@ checkout=function(){
  }
  for(const key of Object.keys(requested)){const p=products[Number(key)],available=Number(p?.stock);if(!p||!Number.isFinite(available)||available<0||requested[key]>available)return alert('পর্যাপ্ত স্টক নেই: '+(p?.name||'পণ্য')+'। বর্তমান মজুত '+(Number.isFinite(available)?available:0)+' '+(p?.unit||''));}
  const partyName=posParty.value.trim(),now=new Date().toISOString();
+ const posBefore={};
  for(const key of Object.keys(requested)){
   const p=products[Number(key)],delta=-requested[key],before=Number(p.stock||0);
-  p.stock=Number((before+delta).toFixed(6));
-  stockMovements.push({id:'sm-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),txId:null,product:p.name,unit:p.unit,qty:requested[key],delta,before,after:p.stock,source:'pos-sale',date:now,reversed:false});
+  posBefore[key]=before;p.stock=Number((before+delta).toFixed(6));
  }
+ const posRunning={...posBefore};
  cart.forEach(x=>{
   const id=Date.now()+Math.random(),p=products[x.productIndex];
   tx.unshift({id,date:now,type:'income',amount:Number(x.total),party:partyName,product:x.name,qty:x.qty,unit:x.unit,note:'POS বিক্রয়',voided:false,createdAt:now,updatedAt:now});
   if(p&&p.stockTracked){
-   const cv=convertStockQty(Number(x.qty),x.unit,p.unit);
-   const m=stockMovements.find(v=>v.source==='pos-sale'&&v.product===p.name&&v.date===now&&!v.txId);
-   if(m)m.txId=id;
-   else stockMovements.push({id:'sm-'+Date.now(),txId:id,product:p.name,unit:p.unit,qty:cv,delta:-cv,before:Number(p.stock||0)+cv,after:Number(p.stock||0),source:'pos-sale',date:now,reversed:false});
+   const cv=convertStockQty(Number(x.qty),x.unit,p.unit),before=Number(posRunning[x.productIndex]);
+   const after=Number((before-cv).toFixed(6));posRunning[x.productIndex]=after;
+   stockMovements.push({id:'sm-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),txId:id,product:p.name,unit:p.unit,qty:cv,delta:-cv,before,after,source:'pos-sale',date:now,reversed:false});
   }
  });
  if(discount>0)tx.unshift({id:Date.now()+Math.random(),date:now,type:'expense',amount:discount,party:partyName,note:'POS ডিসকাউন্ট সমন্বয়',voided:false});
