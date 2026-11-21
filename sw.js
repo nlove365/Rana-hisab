@@ -1,4 +1,4 @@
-const CACHE = 'rana-hisab-v17-stock-count-reconciliation-1';
+const CACHE = 'rana-hisab-v18-full-backup-restore-1';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon.jpg', './sw.js'];
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES))); });
 self.addEventListener('message', event => { if(event.data && event.data.type==='SKIP_WAITING') self.skipWaiting(); });
