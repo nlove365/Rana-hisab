@@ -128,7 +128,7 @@ jobs:
                   "new app logo reference": 'src="icon.jpg"' in html,
                   "payment persistence": "localStorage.setItem('ranaPayments'" in html,
                   "local date calculation": "dateKey=d=>" in html,
-                  "POS discount UI": '"id=\"pos\""' in html and "id=\"posBarcode\"" in html,
+                  "POS discount UI": 'id="pos"' in html and 'id="posDiscount"' in html,
                   "smart command confirmation": "function confirmCommand()" in html,
                   "inventory stock tracking": "function adjustStock()" in html and "stockTracked" in html,
                   "POS stock guard": "function appendStockMovement(product,qty,delta,source,txId)" in html and "after < -1e-9" in html,
