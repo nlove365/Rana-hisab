@@ -479,11 +479,11 @@ function makeReport(){
  });
  const grossProfit=productRevenue-cogs;
  const otherIncome=totalIncome-productRevenue;
- const paymentsInRange=payments.filter(p=>{const d=new Date(p.date);return !Number.isNaN(d.getTime())&&d>=from&&d<=to;});
+ const paymentsInRange=payments.filter(p=>!p.voided&&(()=>{const d=new Date(p.date);return !Number.isNaN(d.getTime())&&d>=from&&d<=to;})());
  const collected=sum(paymentsInRange.filter(p=>p.type==='receive'),p=>p.amount);
  const paid=sum(paymentsInRange.filter(p=>p.type==='pay'),p=>p.amount);
- const currentReceivable=Math.max(0,sum(payments.filter(p=>p.type==='creditSale'),p=>p.amount)-sum(payments.filter(p=>p.type==='receive'),p=>p.amount));
- const currentPayable=Math.max(0,sum(payments.filter(p=>p.type==='creditPurchase'),p=>p.amount)-sum(payments.filter(p=>p.type==='pay'),p=>p.amount));
+ const currentReceivable=Math.max(0,sum(payments.filter(p=>!p.voided&&p.type==='creditSale'),p=>p.amount)-sum(payments.filter(p=>!p.voided&&p.type==='receive'),p=>p.amount));
+ const currentPayable=Math.max(0,sum(payments.filter(p=>!p.voided&&p.type==='creditPurchase'),p=>p.amount)-sum(payments.filter(p=>!p.voided&&p.type==='pay'),p=>p.amount));
  const daily=new Map(),monthly=new Map();
  rows.forEach(x=>{const d=new Date(x.date),key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),month=key.slice(0,7),bucket=x.type==='income'?'income':'expense';if(!daily.has(key))daily.set(key,{income:0,expense:0});if(!monthly.has(month))monthly.set(month,{income:0,expense:0});daily.get(key)[bucket]+=Number(x.amount)||0;monthly.get(month)[bucket]+=Number(x.amount)||0;});
  const dailyRows=Array.from(daily.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v])=>'<tr><td>'+k+'</td><td>'+money(v.income)+'</td><td>'+money(v.expense)+'</td><td>'+money(v.income-v.expense)+'</td></tr>').join('');
@@ -491,7 +491,7 @@ function makeReport(){
  reportResult.innerHTML='<h3>নির্বাচিত সময়ের সারাংশ</h3><p>লেনদেন: <b>'+rows.length+'</b></p><p>মোট আয়/বিক্রয়: <b>'+money(totalIncome)+'</b></p><p>মোট খরচ/ক্রয়: <b>'+money(totalExpense)+'</b></p><p>নগদভিত্তিক নিট পার্থক্য: <b>'+money(totalIncome-totalExpense)+'</b></p><hr><h3>পণ্য বিক্রির আনুমানিক লাভ</h3><p>পণ্য বিক্রির আয়: '+money(productRevenue)+'</p><p>যেসব পণ্যের বর্তমান ক্রয়মূল্য পাওয়া গেছে, তাদের আনুমানিক বিক্রীত পণ্যের খরচ: '+money(cogs)+'</p><p><b>আনুমানিক মোট মুনাফা: '+money(grossProfit)+'</b></p><p>অন্যান্য আয়: '+money(otherIncome)+'</p><p>ক্রয়মূল্য/একক মেলেনি এমন বিক্রয় লাইন: '+costUnknown+' (মুনাফার হিসাবে অন্তর্ভুক্ত নয়)</p><p class="small">এটি আনুমানিক হিসাব: পণ্যের বর্তমান ক্রয়মূল্য দিয়ে হিসাব করা হয়েছে, ঐতিহাসিক ক্রয়মূল্য, কর, ফেরত, অপচয় ও অন্যান্য সমন্বয় অন্তর্ভুক্ত নয়। নগদভিত্তিক নিট পার্থক্যকে প্রকৃত লাভ বলা যাবে না।</p><hr><h3>বাকি ও পাওনা (সব সময়ের হিসাব)</h3><p>গ্রাহকের বাকি পাওনা: <b>'+money(currentReceivable)+'</b> · সরবরাহকারীর দেনা: <b>'+money(currentPayable)+'</b></p><p>নির্বাচিত সময়ে বাকি আদায়: '+money(collected)+' · বাকি পরিশোধ: '+money(paid)+'</p><hr><h3>মাসভিত্তিক হিসাব</h3><div style="overflow:auto"><table><tr><th>মাস</th><th>আয়</th><th>খরচ</th><th>পার্থক্য</th></tr>'+(monthlyRows||'<tr><td colspan="4">তথ্য নেই</td></tr>')+'</table></div><h3>দিনভিত্তিক হিসাব</h3><div style="overflow:auto;max-height:420px"><table><tr><th>তারিখ</th><th>আয়</th><th>খরচ</th><th>পার্থক্য</th></tr>'+(dailyRows||'<tr><td colspan="4">তথ্য নেই</td></tr>')+'</table></div>';
 }
 function recordPayment(){let partyName=payParty.value.trim(),amount=Number(payAmount.value);if(!partyName||!Number.isFinite(amount)||amount<=0)return alert('ব্যক্তির নাম ও সঠিক টাকা দিন');payments.push({id:Date.now(),date:new Date().toISOString(),party:partyName,amount,type:payType.value,note:payNote.value});save();payAmount.value='';payNote.value='';renderPayments();}
-function renderPayments(){let el=document.getElementById('paymentHistory');if(!el)return;el.innerHTML=payments.length?'<table><tr><th>তারিখ</th><th>ব্যক্তি</th><th>ধরন</th><th>টাকা</th><th>বিবরণ</th></tr>'+payments.slice().reverse().map(x=>`<tr><td>${new Date(x.date).toLocaleDateString('bn-BD')}</td><td>${esc(x.party)}</td><td>${x.type==='receive'?'বাকি আদায়':x.type==='pay'?'বাকি পরিশোধ':x.type==='creditSale'?'বাকি বিক্রি':x.type==='creditPurchase'?'বাকি ক্রয়':'অন্যান্য'}</td><td>${money(x.amount)}</td><td>${esc(x.note||'')}</td></tr>`).join('')+'</table>':'এখনো পেমেন্ট নেই'}
+function renderPayments(){let el=document.getElementById('paymentHistory');if(!el)return;el.innerHTML=payments.length?'<table><tr><th>তারিখ</th><th>ব্যক্তি</th><th>ধরন</th><th>টাকা</th><th>বিবরণ</th></tr>'+payments.filter(p=>!p.voided).slice().reverse().map(x=>`<tr><td>${new Date(x.date).toLocaleDateString('bn-BD')}</td><td>${esc(x.party)}</td><td>${x.type==='receive'?'বাকি আদায়':x.type==='pay'?'বাকি পরিশোধ':x.type==='creditSale'?'বাকি বিক্রি':x.type==='creditPurchase'?'বাকি ক্রয়':'অন্যান্য'}</td><td>${money(x.amount)}</td><td>${esc(x.note||'')}</td></tr>`).join('')+'</table>':'এখনো পেমেন্ট নেই'}
 function backup(){
  const readStored=(key,fallback)=>{try{const v=JSON.parse(localStorage.getItem(key));return v===null?fallback:v}catch{return fallback}};
  const data={
@@ -636,7 +636,7 @@ function renderContacts(){var box=document.getElementById('contactList');if(!box
 
 // Contact autocomplete and person-wise account activity summary
 function refreshContactSuggestions(){var d=document.getElementById('ranaContactNames');if(d)d.innerHTML=ranaContacts.filter(function(c){return c.active!==false;}).map(function(c){return '<option value="'+esc(c.name)+'">'+esc(c.type||'')+'</option>';}).join('');}
-var baseRenderContacts=renderContacts;renderContacts=function(){baseRenderContacts();refreshContactSuggestions();var box=document.getElementById('contactList');if(!box)return;var active=ranaContacts.filter(function(c){return c.active!==false;});if(!active.length)return;var summaries=active.map(function(c){var name=(c.name||'').trim().toLocaleLowerCase('bn-BD');var acts=activeTx().filter(function(t){return (t.party||'').trim().toLocaleLowerCase('bn-BD')===name;});var pms=payments.filter(function(p){return (p.party||'').trim().toLocaleLowerCase('bn-BD')===name;});if(!acts.length&&!pms.length)return '';var inc=acts.filter(function(t){return t.type==='income';}).reduce(function(a,t){return a+Number(t.amount||0);},0),exp=acts.filter(function(t){return t.type==='expense';}).reduce(function(a,t){return a+Number(t.amount||0);},0),received=pms.filter(function(p){return p.type==='receive';}).reduce(function(a,p){return a+Number(p.amount||0);},0),paid=pms.filter(function(p){return p.type==='pay';}).reduce(function(a,p){return a+Number(p.amount||0);},0);return '<div class="card" style="margin-top:8px"><strong>'+esc(c.name)+' — হিসাবের সারাংশ</strong><p>আয়/জমা: '+money(inc)+' · খরচ: '+money(exp)+' · আদায়: '+money(received)+' · পরিশোধ: '+money(paid)+'</p><button onclick="document.getElementById(\'payParty\').value='+JSON.stringify(c.name)+';show(\'payments\')">পেমেন্টে নাম নিন</button></div>';}).filter(Boolean).join('');if(summaries){var panel=document.getElementById('contactAccountSummaries');if(!panel){panel=document.createElement('div');panel.id='contactAccountSummaries';box.parentNode.insertBefore(panel,box.nextSibling);}panel.innerHTML='<h3>ব্যক্তিভিত্তিক হিসাবের সারাংশ</h3>'+summaries;}renderContactLedger();};
+var baseRenderContacts=renderContacts;renderContacts=function(){baseRenderContacts();refreshContactSuggestions();var box=document.getElementById('contactList');if(!box)return;var active=ranaContacts.filter(function(c){return c.active!==false;});if(!active.length)return;var summaries=active.map(function(c){var name=(c.name||'').trim().toLocaleLowerCase('bn-BD');var acts=activeTx().filter(function(t){return (t.party||'').trim().toLocaleLowerCase('bn-BD')===name;});var pms=payments.filter(function(p){return !p.voided&&(p.party||'').trim().toLocaleLowerCase('bn-BD')===name;});if(!acts.length&&!pms.length)return '';var inc=acts.filter(function(t){return t.type==='income';}).reduce(function(a,t){return a+Number(t.amount||0);},0),exp=acts.filter(function(t){return t.type==='expense';}).reduce(function(a,t){return a+Number(t.amount||0);},0),received=pms.filter(function(p){return p.type==='receive';}).reduce(function(a,p){return a+Number(p.amount||0);},0),paid=pms.filter(function(p){return p.type==='pay';}).reduce(function(a,p){return a+Number(p.amount||0);},0);return '<div class="card" style="margin-top:8px"><strong>'+esc(c.name)+' — হিসাবের সারাংশ</strong><p>আয়/জমা: '+money(inc)+' · খরচ: '+money(exp)+' · আদায়: '+money(received)+' · পরিশোধ: '+money(paid)+'</p><button onclick="document.getElementById(\'payParty\').value='+JSON.stringify(c.name)+';show(\'payments\')">পেমেন্টে নাম নিন</button></div>';}).filter(Boolean).join('');if(summaries){var panel=document.getElementById('contactAccountSummaries');if(!panel){panel=document.createElement('div');panel.id='contactAccountSummaries';box.parentNode.insertBefore(panel,box.nextSibling);}panel.innerHTML='<h3>ব্যক্তিভিত্তিক হিসাবের সারাংশ</h3>'+summaries;}renderContactLedger();};
 function renderContactLedger(){var box=document.getElementById('contactList');if(!box)return;var active=ranaContacts.filter(function(c){return c.active!==false;});var ledger=active.map(function(c){var nm=(c.name||'').trim().toLocaleLowerCase('bn-BD'),entries=activeTx().filter(function(t){return (t.party||'').trim().toLocaleLowerCase('bn-BD')===nm;}).map(function(t){return {date:t.date,type:t.type==='income'?'আয়':'খরচ',amount:Number(t.amount||0),note:t.note||t.product||'লেনদেন',source:'transaction'};}).concat(payments.filter(function(p){return (p.party||'').trim().toLocaleLowerCase('bn-BD')===nm;}).map(function(p){return {date:p.date,type:p.type==='receive'?'বাকি আদায়':p.type==='pay'?'বাকি পরিশোধ':p.type==='creditSale'?'বাকি বিক্রি':p.type==='creditPurchase'?'বাকি ক্রয়':'পেমেন্ট',amount:Number(p.amount||0),note:p.note||'পেমেন্ট',source:'payment'};}));if(!entries.length)return '';entries.sort(function(a,b){return new Date(b.date)-new Date(a.date);});var totalIncome=entries.filter(function(e){return e.type==='আয়';}).reduce(function(a,e){return a+e.amount;},0),totalExpense=entries.filter(function(e){return e.type==='খরচ';}).reduce(function(a,e){return a+e.amount;},0),totalReceive=entries.filter(function(e){return e.type==='বাকি আদায়';}).reduce(function(a,e){return a+e.amount;},0),totalPay=entries.filter(function(e){return e.type==='বাকি পরিশোধ';}).reduce(function(a,e){return a+e.amount;},0),creditSales=entries.filter(function(e){return e.type==='বাকি বিক্রি';}).reduce(function(a,e){return a+e.amount;},0),creditPurchases=entries.filter(function(e){return e.type==='বাকি ক্রয়';}).reduce(function(a,e){return a+e.amount;},0),receivable=Math.max(0,creditSales-totalReceive),payable=Math.max(0,creditPurchases-totalPay),customerAdvance=Math.max(0,totalReceive-creditSales),supplierAdvance=Math.max(0,totalPay-creditPurchases);return '<div class="card" style="margin-top:10px"><h3>'+esc(c.name)+' — বিস্তারিত খতিয়ান</h3><p>নগদ আয়: '+money(totalIncome)+' · নগদ ব্যয়: '+money(totalExpense)+'</p><p>বাকি বিক্রি: '+money(creditSales)+' · আদায়: '+money(totalReceive)+' · <strong>পাওনা: '+money(receivable)+'</strong></p><p>বাকি ক্রয়: '+money(creditPurchases)+' · পরিশোধ: '+money(totalPay)+' · <strong>দেনা: '+money(payable)+'</strong></p>'+(customerAdvance?'<p>অগ্রিম আদায়: '+money(customerAdvance)+'</p>':'')+(supplierAdvance?'<p>অগ্রিম পরিশোধ: '+money(supplierAdvance)+'</p>':'')+'<div style="overflow:auto"><table><tr><th>তারিখ</th><th>ধরন</th><th>বিবরণ</th><th>টাকা</th></tr>'+entries.slice(0,100).map(function(e){return '<tr><td>'+new Date(e.date).toLocaleDateString('bn-BD')+'</td><td>'+esc(e.type)+'</td><td>'+esc(e.note)+'</td><td>'+money(e.amount)+'</td></tr>';}).join('')+'</table></div><small>এই খতিয়ান লেনদেন ও পেমেন্টের তালিকা; বাকি/দেনা-পাওয়ার চূড়ান্ত হিসাব আলাদা যাচাই প্রয়োজন।</small></div>';}).filter(Boolean).join('');var panel=document.getElementById('contactLedgerPanel');if(!panel){panel=document.createElement('div');panel.id='contactLedgerPanel';box.parentNode.insertBefore(panel,box.nextSibling);}panel.innerHTML=ledger?'<h3>ব্যক্তিভিত্তিক বিস্তারিত খতিয়ান</h3>'+ledger:'';}
 var priorGlobalSearch=runGlobalSearch;runGlobalSearch=function(){priorGlobalSearch();var input=document.getElementById('globalSearchInput'),out=document.getElementById('globalSearchResults');if(!input||!out||!input.value.trim())return;var q=input.value.trim().toLocaleLowerCase('bn-BD');var hits=ranaContacts.filter(function(c){return c.active!==false&&[c.name,c.phone,c.address,c.note,c.type].filter(Boolean).join(' ').toLocaleLowerCase('bn-BD').includes(q);});if(hits.length){out.innerHTML+='<h3>পরিচিতি ('+hits.length+')</h3><ul>'+hits.slice(0,40).map(function(c){return '<li>'+esc(c.name)+' — '+esc(c.phone||'ফোন নেই')+' — '+esc(c.type||'')+'</li>';}).join('')+'</ul>';}};
 var oldShowForContacts=show;show=function(id){if(id==='contacts'){['dash','add','list','cmd','products','photo','pos','reports','payments','sources','holidays','budget','searchhub','help','contacts'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.toggle('hidden',k!==id);});renderContacts();return;}oldShowForContacts(id);};
@@ -716,19 +716,28 @@ del=function(id){
   const reversal=-Number(m.delta),next=Number(p.stock||0)+reversal;
   if(!Number.isFinite(next)||next < -1e-9)return alert('স্টক ফেরত দেওয়ার আগে মজুত যাচাই প্রয়োজন। লেনদেন বাতিল করা হয়নি।');
  }
- if(!confirm('লেনদেনটি বাতিল (Void) করবেন? সংশ্লিষ্ট স্টক মুভমেন্ট বিপরীতভাবে সমন্বয় হবে।'))return;
+ if(!confirm('লেনদেনটি বাতিল (Void) করবেন? সংশ্লিষ্ট স্টক, POS ছাড় ও বাকি বিক্রির সমন্বয় করা হবে।'))return;
  for(const m of linked.slice().reverse()){
   const p=products.find(v=>v.name===m.product),before=Number(p.stock||0),delta=-Number(m.delta);
   p.stock=Number(Math.max(0,before+delta).toFixed(6));
   m.reversed=true;m.reversedAt=new Date().toISOString();
   stockMovements.push({id:'sm-rev-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),txId:x.id,product:p.name,unit:m.unit,qty:m.qty,delta,before,after:p.stock,source:'void-reversal',date:new Date().toISOString(),reverses:m.id,reversed:false});
  }
- x.voided=true;x.voidedAt=new Date().toISOString();save();renderStockHistory();
+ if(x.posForTxId){const discountEntry=tx.find(t=>String(t.id)===String(x.posForTxId)&&!t.voided);if(discountEntry){discountEntry.voided=true;discountEntry.voidedAt=new Date().toISOString();}}
+ if(x.posBatchId){
+  payments.filter(p=>!p.voided&&p.type==='creditSale'&&p.posBatchId===x.posBatchId).forEach(p=>{
+   const reduction=Math.max(0,Number(x.creditDueAmount)||0);
+   p.amount=Math.max(0,Number((Number(p.amount||0)-reduction).toFixed(2)));
+   if(Array.isArray(p.linkedTxIds)&&p.linkedTxIds.every(id=>{const row=tx.find(t=>String(t.id)===String(id));return !row||row.voided;})){p.amount=0;p.voided=true;p.voidedAt=new Date().toISOString();}
+   else if(p.amount<=0.005){p.amount=0;p.voided=true;p.voidedAt=new Date().toISOString();}
+  });
+ }
+ x.voided=true;x.voidedAt=new Date().toISOString();save();renderStockHistory();renderPayments();
 };
 checkout=function(){
  if(!cart.length)return alert('কার্টে পণ্য যোগ করুন');
  const subtotal=cart.reduce((a,x)=>a+Number(x.total||0),0),discount=Number(posDiscount.value||0);
- if(!Number.isFinite(subtotal)||subtotal<0||!Number.isFinite(discount)||discount<0||discount>subtotal)return alert('ছাড় সাবটোটালের চেয়ে বেশি বা ঋণাত্মক হতে পারে না');
+ if(!Number.isFinite(subtotal)||subtotal<=0||!Number.isFinite(discount)||discount<0||discount>subtotal)return alert('সাবটোটাল বা ছাড়ের পরিমাণ সঠিক নয়');
  const total=subtotal-discount,paid=Number(posPaid.value||0);
  if(!Number.isFinite(paid)||paid<0||paid>total)return alert('প্রাপ্ত টাকা মোটের বেশি বা ঋণাত্মক হতে পারে না');
  const requested={};
@@ -738,26 +747,20 @@ checkout=function(){
   if(p&&p.stockTracked){const cv=convertStockQty(q,x.unit,p.unit);if(cv===null)return alert('পণ্যের একক মিলছে না: '+p.name);requested[x.productIndex]=(requested[x.productIndex]||0)+cv;}
  }
  for(const key of Object.keys(requested)){const p=products[Number(key)],available=Number(p?.stock);if(!p||!Number.isFinite(available)||available<0||requested[key]>available)return alert('পর্যাপ্ত স্টক নেই: '+(p?.name||'পণ্য')+'। বর্তমান মজুত '+(Number.isFinite(available)?available:0)+' '+(p?.unit||''));}
- const partyName=posParty.value.trim(),now=new Date().toISOString();
+ const partyName=posParty.value.trim(),now=new Date().toISOString(),batchId='pos-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
  const posBefore={};
- for(const key of Object.keys(requested)){
-  const p=products[Number(key)],delta=-requested[key],before=Number(p.stock||0);
-  posBefore[key]=before;p.stock=Number((before+delta).toFixed(6));
- }
- const posRunning={...posBefore};
+ for(const key of Object.keys(requested)){const p=products[Number(key)],before=Number(p.stock||0);posBefore[key]=before;p.stock=Number((before-requested[key]).toFixed(6));}
+ const posRunning={...posBefore},linkedTxIds=[];
  cart.forEach(x=>{
-  const id=Date.now()+Math.random(),p=products[x.productIndex];
-  tx.unshift({id,date:now,type:'income',amount:Number(x.total),party:partyName,product:x.name,qty:x.qty,unit:x.unit,note:'POS বিক্রয়',voided:false,createdAt:now,updatedAt:now});
-  if(p&&p.stockTracked){
-   const cv=convertStockQty(Number(x.qty),x.unit,p.unit),before=Number(posRunning[x.productIndex]);
-   const after=Number((before-cv).toFixed(6));posRunning[x.productIndex]=after;
-   stockMovements.push({id:'sm-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),txId:id,product:p.name,unit:p.unit,qty:cv,delta:-cv,before,after,source:'pos-sale',date:now,reversed:false});
-  }
+  const id=Date.now()+Math.random(),p=products[x.productIndex],gross=Number(x.total),discountShare=Number((discount*gross/subtotal).toFixed(2)),netLine=Number((gross-discountShare).toFixed(2)),creditDue=total>0?Number((netLine*(total-paid)/total).toFixed(2)):0;
+  linkedTxIds.push(id);
+  tx.unshift({id,date:now,type:'income',amount:gross,party:partyName,product:x.name,qty:x.qty,unit:x.unit,note:'POS বিক্রয়',voided:false,createdAt:now,updatedAt:now,posBatchId:batchId,discountShare,creditDueAmount:creditDue});
+  if(discountShare>0)tx.unshift({id:Date.now()+Math.random(),date:now,type:'expense',amount:discountShare,party:partyName,note:'POS ডিসকাউন্ট সমন্বয়',voided:false,posForTxId:id,posBatchId:batchId});
+  if(p&&p.stockTracked){const cv=convertStockQty(Number(x.qty),x.unit,p.unit),before=Number(posRunning[x.productIndex]),after=Number((before-cv).toFixed(6));posRunning[x.productIndex]=after;stockMovements.push({id:'sm-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),txId:id,product:p.name,unit:p.unit,qty:cv,delta:-cv,before,after,source:'pos-sale',date:now,reversed:false});}
  });
- if(discount>0)tx.unshift({id:Date.now()+Math.random(),date:now,type:'expense',amount:discount,party:partyName,note:'POS ডিসকাউন্ট সমন্বয়',voided:false});
- if(paid<total)payments.push({id:Date.now(),date:now,party:partyName||'অজ্ঞাত কাস্টমার',amount:total-paid,type:'creditSale',note:'POS বাকি বিক্রি'});
+ if(paid<total)payments.push({id:Date.now()+Math.random(),date:now,party:partyName||'অজ্ঞাত কাস্টমার',amount:Number((total-paid).toFixed(2)),type:'creditSale',note:'POS বাকি বিক্রি',posBatchId:batchId,linkedTxIds});
  save();document.getElementById('receipt').innerHTML='<h3>রানা হিসাব — বিক্রয় রসিদ</h3><p>কাস্টমার: '+esc(partyName||'সাধারণ')+'</p><p>মোট: '+money(total)+' | পেয়েছি: '+money(paid)+' | বাকি: '+money(total-paid)+'</p><button onclick="window.print()">রসিদ প্রিন্ট</button>';
- cart=[];renderCart();renderStockHistory();
+ cart=[];renderCart();renderStockHistory();renderPayments();
 };
 function renderStockHistory(){
  const el=document.getElementById('stockHistory');if(!el)return;
