@@ -1,4 +1,4 @@
-const CACHE = 'rana-hisab-v15-party-balances-1';
+const CACHE = 'rana-hisab-v16-sales-return-fifo-1';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon.jpg', './sw.js'];
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES))); });
 self.addEventListener('message', event => { if(event.data && event.data.type==='SKIP_WAITING') self.skipWaiting(); });
